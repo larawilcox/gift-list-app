@@ -1,0 +1,12 @@
+{
+  "name": "GiftList",
+  "displayName": "GiftList",
+  "expo": {
+    "name": "GiftList",
+    "slug": "GiftList",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
