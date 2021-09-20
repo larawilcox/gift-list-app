@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import isURL from 'validator/lib/isURL';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
+import RNPickerSelect from 'react-native-picker-select';
 
 import Colors from '../Constants/Colors';
 
@@ -12,12 +13,22 @@ const AddItem = ({ route }) => {
 
     const [itemDescription, setItemDescription] = useState('');
     const [itemDetail, setItemDetail] = useState('');
+    const [itemPrice, setItemPrice] = useState('');
     const [linkDescription, setLinkDescription] = useState('');
     const [link, setLink] = useState('');
     const [links, setLinks] = useState([]);
     const [buttonDisabled, setButtonDisabled] = useState(true);
     const [saveButtonDisabled, setSaveButtonDisabled] = useState(true);
     const [linkError, setLinkError] = useState('');
+
+    const priceValueOptions = [
+        { label: 'Unspecified', value: '0' },
+        { label: 'Under £10', value: '1' },
+        { label: '£10-£20', value: '2' },
+        { label: '£20-£50', value: '3' },
+        { label: '£50-£100', value: '4' },
+        { label: 'Over £100', value: '5' },
+    ];
 
     const navigation = useNavigation();
 
@@ -71,12 +82,12 @@ const AddItem = ({ route }) => {
             item: itemDescription,
             itemId: newId,
             detail: itemDetail,
+            price: itemPrice,
             links: links
         }
         
         const currentListIndex = data.findIndex(list => list.listId === listId )
-        console.log(currentListIndex);
-        console.log(data);
+   
 
         //update the listItems array at this index
 
@@ -122,6 +133,14 @@ const AddItem = ({ route }) => {
                             textAlignVertical='center'
                             autoCorrect={false}
                         />
+                        <Text style={styles.headerText}>Price Range</Text>
+                        <View style={styles.listInput}>
+                            <RNPickerSelect
+                                onValueChange={setItemPrice}
+                                items={priceValueOptions}
+                                textInputProps={styles.priceInput}
+                            />
+                        </View>
                         <Text style={styles.headerText}>Links</Text>
                         {links.map((link, i) => (
                             <View key={i} style={styles.linkList}>
@@ -203,7 +222,8 @@ const styles = StyleSheet.create({
         paddingRight: 10,
         fontSize: 18,
         color: Colors.primary,
-        textAlign: 'left'
+        textAlign: 'left',
+        justifyContent: 'center'
     },
     newListButton:{
         height: 50,
@@ -246,6 +266,13 @@ const styles = StyleSheet.create({
         marginBottom: 50,
         width: 300,
         marginTop: 20
+    },
+    priceInput: {
+        paddingLeft: 10,
+        paddingRight: 10,
+        fontSize: 18,
+        color: Colors.primary,
+        textAlign: 'left'
     }
 })
 

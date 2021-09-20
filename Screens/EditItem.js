@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import isURL from 'validator/lib/isURL';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
+import RNPickerSelect from 'react-native-picker-select';
 
 import Colors from '../Constants/Colors';
 
@@ -23,6 +24,7 @@ const EditItem = ({ route }) => {
 
     const [itemDescription, setItemDescription] = useState(currentItem.item);
     const [itemDetail, setItemDetail] = useState(currentItem.detail);
+    const [itemPrice, setItemPrice] = useState(currentItem.price);
     const [linkDescription, setLinkDescription] = useState('');
     const [link, setLink] = useState('');
     const [links, setLinks] = useState(currentItem.links);
@@ -35,6 +37,15 @@ const EditItem = ({ route }) => {
     const [selectedLinkDescription, setSelectedLinkDescription] = useState('');
     const [selectedLinkLink, setSelectedLinkLink] = useState('');
     const [selectedLinkId, setSelectedLinkId] = useState('');
+
+    const priceValueOptions = [
+        { label: 'Unspecified', value: '0' },
+        { label: 'Under £10', value: '1' },
+        { label: '£10-£20', value: '2' },
+        { label: '£20-£50', value: '3' },
+        { label: '£50-£100', value: '4' },
+        { label: 'Over £100', value: '5' },
+    ];
 
 
     const currentListIndex = data.findIndex(list => list.listId === listId);
@@ -109,7 +120,10 @@ const EditItem = ({ route }) => {
     const saveItemChanges = () => {
         data[currentListIndex].listItems[currentItemIndex].item = itemDescription;
         data[currentListIndex].listItems[currentItemIndex].detail = itemDetail;
+        data[currentListIndex].listItems[currentItemIndex].price = itemPrice;
         data[currentListIndex].listItems[currentItemIndex].links = links;
+
+        console.log(itemPrice);
 
         navigation.navigate('Chosen List', {
             listId: listId,
@@ -147,6 +161,15 @@ const EditItem = ({ route }) => {
                             textAlignVertical='center'
                             autoCorrect={false}
                         />
+                        <Text style={styles.headerText}>Price Range</Text>
+                        <View style={styles.listInput}>
+                            <RNPickerSelect
+                                onValueChange={setItemPrice}
+                                items={priceValueOptions}
+                                textInputProps={styles.priceInput}
+                                value={itemPrice}
+                            />
+                        </View>
                         <View style={styles.linkHeaderContainer}>
                             <Text style={styles.headerTextLinks}>Links</Text>
                             <TouchableOpacity onPress={() => setAddLinkModalVisible(true)}>
@@ -389,7 +412,8 @@ const styles = StyleSheet.create({
         paddingRight: 10,
         fontSize: 18,
         color: Colors.primary,
-        textAlign: 'left'
+        textAlign: 'left',
+        justifyContent: 'center'
     },
     newListButton:{
         height: 50,
@@ -552,6 +576,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         paddingBottom: 5,
         paddingTop: 20
+    },
+    priceInput: {
+        paddingLeft: 10,
+        paddingRight: 10,
+        fontSize: 18,
+        color: Colors.primary,
+        textAlign: 'left'
     }
 })
 

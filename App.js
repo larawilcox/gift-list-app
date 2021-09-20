@@ -5,6 +5,7 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator, HeaderBackButton } from '@react-navigation/stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import MyLists from './Screens/MyLists';
 import SubscribedLists from './Screens/SubscribedLists';
@@ -14,6 +15,9 @@ import AddList from './Screens/AddList';
 import AddItem from './Screens/AddItem';
 import EditList from './Screens/EditList';
 import EditItem from './Screens/EditItem';
+import SubscribedToList from './Screens/SubscribedToList';
+import ShareList from './Screens/ShareList';
+
 
 import Colors from './Constants/Colors';
 
@@ -21,6 +25,8 @@ import { AntDesign } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator();
 const MyListStack = createStackNavigator();
+const SubscribedListsStack = createStackNavigator();
+const SettingsStack = createStackNavigator();
 
 
 function MyListStackScreen() {
@@ -118,11 +124,91 @@ function MyListStackScreen() {
               ),
               headerBackTitle: 'Back'
               })} />
+        <MyListStack.Screen 
+            name ="Share List" 
+            component={ShareList}
+            options={({ navigation }) => ({
+              headerRight: () => (
+                <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
+                  <AntDesign name="close" size={24} color={Colors.primary} />
+                </TouchableOpacity>
+              ),
+              headerLeft: (props) => (
+                <HeaderBackButton
+                  {...props}
+                  onPress={() => navigation.goBack()}
+                />
+              ),
+              headerBackTitle: 'Back'
+              })} />
     </MyListStack.Navigator>
   )
 }
 
+
+function SubscribedListsStackScreen() {
+  return (
+    <SubscribedListsStack.Navigator
+      initialRouteName="Subscribed Lists" 
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: Colors.background,
+        },
+        headerTintColor: Colors.primary,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+          fontSize: 26
+        }
+      }}
+    >
+        <SubscribedListsStack.Screen name="Subscribed Lists" component={SubscribedLists} />
+        <SubscribedListsStack.Screen 
+            name="Subscribed To List" 
+            component={SubscribedToList} 
+            options={({ route, navigation }) => ({
+              title: route.params.listName,
+              headerRight: () => (
+                <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
+                  <AntDesign name="close" size={24} color={Colors.primary} />
+                </TouchableOpacity>
+              ),
+              headerLeft: (props) => (
+                <HeaderBackButton
+                  {...props}
+                  onPress={() => navigation.goBack()}
+                />
+              ),
+              headerBackTitle: 'Back'
+              })}
+            />
+    </SubscribedListsStack.Navigator>
+  )
+}
+
+
+function SettingsStackScreen() {
+  return (
+    <SettingsStack.Navigator
+        initialRouteName="Settings" 
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: Colors.background,
+          },
+          headerTintColor: Colors.primary,
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 26
+          }
+        }}
+    >
+      <SettingsStack.Screen name="Settings" component={Settings}></SettingsStack.Screen>
+    </SettingsStack.Navigator>
+  )
+}
+
+
 export default function App() {
+  const insets = useSafeAreaInsets();
   return (
     <NavigationContainer>
       <Tab.Navigator
@@ -136,13 +222,15 @@ export default function App() {
               fontWeight: 'bold',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingBottom: 13
+              paddingBottom: 13,
             },
             style:{
               backgroundColor: Colors.background,
               paddingLeft: 25,
               paddingRight: 25,
-              marginTop: 15
+              paddingTop: 15,
+              height: insets.bottom === 0 ? insets.bottom + 75 : insets.bottom + 60,
+              paddingBottom: insets.bottom === 0 ? 15 + insets.bottom : insets.bottom
             },
             tabStyle: {
               borderRadius: 15,
@@ -151,8 +239,8 @@ export default function App() {
 
       >
         <Tab.Screen name="My Lists" component={MyListStackScreen} />
-        <Tab.Screen name="Friends' Lists" component={SubscribedLists} />
-        <Tab.Screen name="Settings" component={Settings} />
+        <Tab.Screen name="Friends' Lists" component={SubscribedListsStackScreen} />
+        <Tab.Screen name="Settings" component={SettingsStackScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );

@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { Feather } from '@expo/vector-icons'; 
 import { AntDesign } from '@expo/vector-icons'; 
+import { Ionicons } from '@expo/vector-icons';
 
 import Colors from '../Constants/Colors';
 
@@ -12,10 +13,7 @@ import { Data as dataItems } from '../Data/DummyData';
 
 
 
-
-
 const MyLists = () => {
-
 
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedList, setSelectedList] = useState('');
@@ -45,6 +43,10 @@ const MyLists = () => {
             data: data
         })} style={styles.listItem}>
             <Text style={styles.listNameText}>{listName}</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Share List', {listId: listId, data: data})}>
+                <Feather name="share" size={24} color="black" />
+            </TouchableOpacity>
+            <View style={styles.spacer}></View>
             <TouchableOpacity onPress={() => navigation.navigate('Edit List', {oldListName: listName, oldListId: listId, oldListDate: listDate, data: data})}>
                 <Feather name="edit" size={24} color="black" />
             </TouchableOpacity>
@@ -113,8 +115,9 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'center',
         marginBottom: 10,
-        width: 380,
-        paddingRight: 40
+        marginLeft: 9,
+        width: '95%',
+        paddingRight: 12
     },
     list: {
         paddingTop: 30
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: Colors.primary,
         textAlign: 'left',
-        width: 310,
+        width: '75%',
         paddingLeft: 20
     },
     newListButton:{

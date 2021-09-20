@@ -9,6 +9,93 @@ import { AntDesign } from '@expo/vector-icons';
 
 
 
+const priceValueOptions = [
+    { label: '£ Not specified', value: '0' },
+    { label: 'Under £10', value: '1' },
+    { label: '£10-£20', value: '2' },
+    { label: '£20-£50', value: '3' },
+    { label: '£50-£100', value: '4' },
+    { label: 'Over £100', value: '5' },
+];
+
+
+const Item = ({ listItem, itemId, detail, price, links, data, toggleDetail, setToggleDetail, currentList, deleteItemFromChosenList }) => {
+
+    const itemPrice = priceValueOptions.find(itemPrice => price === itemPrice.value);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedItem, setSelectedItem] = useState('');
+    const [selectedItemId, setSelectedItemId] = useState('');
+
+    const navigation = useNavigation();
+
+
+
+    return (
+    <TouchableOpacity onPress={()=> {setToggleDetail(toggleDetail === itemId ? '' : itemId)}} >
+        {itemId === toggleDetail ? (
+            <View style={styles.listItemDetail}>
+                <View style={styles.titleLine}>
+                    <Text style={styles.listItemText, styles.listItemTextTitle}>{listItem}</Text> 
+                    <TouchableOpacity onPress={() => navigation.navigate('Edit Item', {data: data, itemId: itemId, listId: currentList.listId})}>
+                        <Feather name="edit" size={24} color="black" />
+                    </TouchableOpacity>
+                    <View style={styles.spacer}></View>
+                    <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedItem(listItem); setSelectedItemId(itemId)}}>
+                        <AntDesign name="delete" size={24} color="black" />
+                    </TouchableOpacity>
+                </View>
+                { price ?  
+                    <Text style={styles.listItemText}>{itemPrice.label}</Text>
+                    : null
+                }
+                { detail ?
+                <Text style={styles.listItemText}>{detail}</Text>
+                : null
+                }
+                {links ? 
+                links.map(link => 
+                    <Text style={styles.listItemLinkText} key={link.link} onPress={() => Linking.openURL(link.link)}>{link.linkDescription ? link.linkDescription : 'Link'}</Text>
+                    )
+                : null
+                }
+            </View>
+        ) :
+            <View style={styles.listItem}>
+                <Text style={styles.listItemText}>{listItem}</Text> 
+                <TouchableOpacity onPress={() => {navigation.navigate('Edit Item', {data: data, itemId: itemId, listId: currentList.listId}); setToggleDetail(itemId)}}>
+                    <Feather name="edit" size={24} color="black" />
+                </TouchableOpacity>
+                <View style={styles.spacer}></View>
+                <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedItem(listItem); setSelectedItemId(itemId)}}>
+                    <AntDesign name="delete" size={24} color="black" />
+                </TouchableOpacity>
+             </View>
+        }
+
+            <Modal
+                visible={modalVisible}
+                transparent={true}
+            >
+                    <View style={styles.contentContainer}>
+                        <Text style={styles.text}>Delete Item</Text>
+                        <Text style={styles.text}>{selectedItem} ?</Text>
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity style={styles.button} onPress={() => {deleteItemFromChosenList(selectedItemId, setModalVisible)}}>
+                                <Text style={styles.buttonText}>Delete</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => {setModalVisible(false)}} style={styles.button}>
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+            </Modal>
+
+    </TouchableOpacity>
+  )
+};
+
+
+
 
 const ChosenList = ({ route }) => {
     
@@ -23,12 +110,9 @@ const ChosenList = ({ route }) => {
     const currentListIndex = data.findIndex(list => list.listId === listId);
 
     const [toggleDetail, setToggleDetail] = useState();
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedItem, setSelectedItem] = useState('');
-    const [selectedItemId, setSelectedItemId] = useState('');
 
 
-    const deleteItemFromChosenList = () => {
+    const deleteItemFromChosenList = (selectedItemId, setModalVisible) => {
         const itemToDeleteIndex = data[currentListIndex].listItems.findIndex(item => item.itemId === selectedItemId);
 
         data[currentListIndex].listItems.splice(itemToDeleteIndex, 1)
@@ -38,46 +122,9 @@ const ChosenList = ({ route }) => {
     }
 
 
-    const Item = ({ listItem, itemId, detail, links, data }) => (
-        <TouchableOpacity onPress={()=> {setToggleDetail(toggleDetail === itemId ? '' : itemId)}} >
-            {itemId === toggleDetail ? (
-                <View style={styles.listItemDetail}>
-                    <View style={styles.titleLine}>
-                        <Text style={styles.listItemText, styles.listItemTextTitle}>{listItem}</Text> 
-                        <TouchableOpacity onPress={() => navigation.navigate('Edit Item', {data: data, itemId: itemId, listId: currentList.listId})}>
-                            <Feather name="edit" size={24} color="black" />
-                        </TouchableOpacity>
-                        <View style={styles.spacer}></View>
-                        <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedItem(listItem); setSelectedItemId(itemId)}}>
-                            <AntDesign name="delete" size={24} color="black" />
-                        </TouchableOpacity>
-                    </View>
-                    { detail ?
-                    <Text style={styles.listItemText}>{detail}</Text>
-                    : null
-                    }
-                    {links ? 
-                    links.map(link => 
-                        <Text style={styles.listItemLinkText} key={link.link} onPress={() => Linking.openURL(link.link)}>{link.linkDescription ? link.linkDescription : 'Link'}</Text>
-                        )
-                    : null
-                    }
-                </View>
-            ) :
-                <View style={styles.listItem}>
-                    <Text style={styles.listItemText}>{listItem}</Text> 
-                    <TouchableOpacity onPress={() => {navigation.navigate('Edit Item', {data: data, itemId: itemId, listId: currentList.listId}); setToggleDetail(itemId)}}>
-                        <Feather name="edit" size={24} color="black" />
-                    </TouchableOpacity>
-                    <View style={styles.spacer}></View>
-                    <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedItem(listItem); setSelectedItemId(itemId)}}>
-                        <AntDesign name="delete" size={24} color="black" />
-                    </TouchableOpacity>
-                 </View>
-            }
-        </TouchableOpacity>
-      );
+    
 
+    
     return (
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView style={styles.KAVContainer}>
@@ -85,7 +132,18 @@ const ChosenList = ({ route }) => {
                 <FlatList 
                     data={dataItems}
                     renderItem={({ item }) => (
-                        <Item listItem={item.item} itemId={item.itemId} detail={item.detail} links={item.links} data={data} />)}
+                        <Item 
+                            listItem={item.item} 
+                            itemId={item.itemId} 
+                            detail={item.detail} 
+                            price={item.price} 
+                            links={item.links} 
+                            data={data} 
+                            toggleDetail={toggleDetail}
+                            setToggleDetail={setToggleDetail}
+                            currentList={currentList}
+                            deleteItemFromChosenList={deleteItemFromChosenList}
+                            />)}
                     keyExtractor={item => item.itemId}
                     style={styles.list}
                 />
@@ -95,23 +153,7 @@ const ChosenList = ({ route }) => {
                     </View>
                 )
                 }
-                <Modal
-                    visible={modalVisible}
-                    transparent={true}
-                >
-                        <View style={styles.contentContainer}>
-                            <Text style={styles.text}>Delete Item</Text>
-                            <Text style={styles.text}>{selectedItem} ?</Text>
-                            <View style={styles.buttonContainer}>
-                                <TouchableOpacity style={styles.button} onPress={deleteItemFromChosenList}>
-                                    <Text style={styles.buttonText}>Delete</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => {setModalVisible(false)}} style={styles.button}>
-                                    <Text style={styles.buttonText}>Cancel</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                </Modal>
+                
                 <TouchableOpacity style={styles.addItemButton} onPress={() => navigation.navigate('Add New Item', {
                         listId: listId,
                         data: data
@@ -145,8 +187,9 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'flex-start',
         marginBottom: 10,
-        width: 380,
-        paddingRight: 40,
+        marginLeft: 8,
+        width: '95%',
+        paddingRight: 10,
         paddingBottom: 10,
         paddingTop: 10,
         
@@ -183,7 +226,7 @@ const styles = StyleSheet.create({
         paddingBottom: 5,
         fontWeight: 'bold',
         textAlign: 'left',
-        width: 310,
+        width: '83%',
         paddingLeft: 20
     },
     noItemsTextContainer: {
@@ -204,7 +247,7 @@ const styles = StyleSheet.create({
         color: Colors.primary,
         paddingBottom: 5,
         textAlign: 'left',
-        width: 310,
+        width: '83%',
         paddingLeft: 20
     },
     listItemDetail: {
@@ -214,7 +257,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'flex-start',
         marginBottom: 10,
-        width: 380,
+        marginLeft: 8,
+        width: '95%',
         paddingTop: 15,
         paddingBottom: 15,
         paddingRight: 10
