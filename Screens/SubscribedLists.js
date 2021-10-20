@@ -1,18 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, View, StyleSheet, SafeAreaView, KeyboardAvoidingView, SectionList, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
 import Colors from '../Constants/Colors';
 import { SubscribedListsData as Data } from '../Data/SubscribedListsData';
-
+import { BASE_URL } from '../Constants/Api';
 
 const SubscribedLists = () => {
 
-    const sectionListData = Data.map(section => {
-        return { title: section.forename, id: section.email, data: section.lists.map(list => {
-            return { list: list.listName, id: list.listId }
-        })}
-    });
+    const [sectionListData, setSectionListData] = useState([])
+
+    
+
+    const fetchData = async () => {
+        try {
+            const token = await SecureStore.getItemAsync('token')
+            const mySubscribedLists = await axios.get(`${BASE_URL}/users/me/subscribedLists`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            console.log(mySubscribedLists)
+
+            const sectionListData = mySubscribedLists.data.map(section => {
+                return { title: section.forename, _id: section._id, email: section.email, data: section.lists.map(list => {
+                    return { list: list.listName, id: list._id }
+                })}
+            });
+            setSectionListData(sectionListData);
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    useEffect(() => {
+        void fetchData();
+    }, []);
 
     const navigation = useNavigation();
 

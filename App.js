@@ -17,17 +17,59 @@ import EditList from './Screens/EditList';
 import EditItem from './Screens/EditItem';
 import SubscribedToList from './Screens/SubscribedToList';
 import ShareList from './Screens/ShareList';
+import Login from './Screens/Login';
+import ForgotPassword from './Screens/ForgotPassword';
+import PasswordChange from './Screens/PasswordChange';
+import SignUp from './Screens/SignUp';
 
 
 import Colors from './Constants/Colors';
 
 import { AntDesign } from '@expo/vector-icons'; 
 
-const Tab = createBottomTabNavigator();
+const LoginStack = createStackNavigator();
+const MyAppTab = createBottomTabNavigator();
 const MyListStack = createStackNavigator();
 const SubscribedListsStack = createStackNavigator();
 const SettingsStack = createStackNavigator();
 
+function MyAppTabScreen() {
+  const insets = useSafeAreaInsets();
+  return (
+  <MyAppTab.Navigator
+          initialRouteName="My Lists"
+          tabBarOptions={{
+            activeBackgroundColor: Colors.primary,
+            inactiveBackgroundColor: Colors.background,
+            activeTintColor: Colors.textLight,
+            inactiveTintColor: Colors.primary,
+            labelStyle: {
+              fontSize: 16,
+              fontWeight: 'bold',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingBottom: 13,
+            },
+            style:{
+              backgroundColor: Colors.background,
+              paddingLeft: 25,
+              paddingRight: 25,
+              paddingTop: 15,
+              height: insets.bottom === 0 ? insets.bottom + 75 : insets.bottom + 60,
+              paddingBottom: insets.bottom === 0 ? 15 + insets.bottom : insets.bottom
+            },
+            tabStyle: {
+              borderRadius: 15,
+            }
+          }}
+
+      >
+        <MyAppTab.Screen name="My Lists" component={MyListStackScreen} />
+        <MyAppTab.Screen name="Friends' Lists" component={SubscribedListsStackScreen} />
+        <MyAppTab.Screen name="Settings" component={SettingsStackScreen} />
+      </MyAppTab.Navigator>
+  )
+}
 
 function MyListStackScreen() {
   return (
@@ -44,21 +86,23 @@ function MyListStackScreen() {
         }
       }}
     >
-      <MyListStack.Screen name="My Lists" component={MyLists} />
+      <MyListStack.Screen 
+          name="My Lists" 
+          component={MyLists} />
       <MyListStack.Screen 
           name="Chosen List" 
           component={ChosenList} 
           options={({ route, navigation }) => ({
               title: route.params.listName,
               headerRight: () => (
-                <TouchableOpacity style={styles.closeButton} onPress={() => navigation.popToTop()}>
+                <TouchableOpacity style={styles.closeButton} onPress={() => navigation.navigate('My Lists')}>
                   <AntDesign name="close" size={24} color={Colors.primary} />
                 </TouchableOpacity>
               ),
               headerLeft: (props) => (
                 <HeaderBackButton
                   {...props}
-                  onPress={() => navigation.popToTop()}
+                  onPress={() => navigation.navigate('My Lists')}
                 />
               ),
               headerBackTitle: 'Back'
@@ -78,14 +122,20 @@ function MyListStackScreen() {
           component={AddItem}
           options={({ navigation }) => ({
             headerRight: () => (
-              <TouchableOpacity style={styles.closeButton} onPress={() => navigation.popToTop()}>
+              <TouchableOpacity style={styles.closeButton} onPress={() => navigation.reset({
+                index: 0,
+                routes: [{ name: "My Lists" }]
+              })}>
                 <AntDesign name="close" size={24} color={Colors.primary} />
               </TouchableOpacity>
             ),
             headerLeft: (props) => (
               <HeaderBackButton
                 {...props}
-                onPress={() => navigation.popToTop()}
+                onPress={() => navigation.reset({
+                  index: 0,
+                  routes: [{ name: "My Lists" }]
+                })}
               />
             ),
             headerBackTitle: 'Back'
@@ -208,42 +258,27 @@ function SettingsStackScreen() {
 
 
 export default function App() {
-  const insets = useSafeAreaInsets();
   return (
     <NavigationContainer>
-      <Tab.Navigator
-          tabBarOptions={{
-            activeBackgroundColor: Colors.primary,
-            inactiveBackgroundColor: Colors.background,
-            activeTintColor: Colors.textLight,
-            inactiveTintColor: Colors.primary,
-            labelStyle: {
-              fontSize: 16,
-              fontWeight: 'bold',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingBottom: 13,
-            },
-            style:{
+      <LoginStack.Navigator
+          initialRouteName="Login"
+          headerMode='screen'
+          screenOptions={{
+            backgroundColor: Colors.secondary,
+            headerStyle: {
               backgroundColor: Colors.background,
-              paddingLeft: 25,
-              paddingRight: 25,
-              paddingTop: 15,
-              height: insets.bottom === 0 ? insets.bottom + 75 : insets.bottom + 60,
-              paddingBottom: insets.bottom === 0 ? 15 + insets.bottom : insets.bottom
+              shadowColor: 'transparent'
             },
-            tabStyle: {
-              borderRadius: 15,
-            }
-          }}
-
-      >
-        <Tab.Screen name="My Lists" component={MyListStackScreen} />
-        <Tab.Screen name="Friends' Lists" component={SubscribedListsStackScreen} />
-        <Tab.Screen name="Settings" component={SettingsStackScreen} />
-      </Tab.Navigator>
+            headerShown: false
+        }} >
+          <LoginStack.Screen options={{ title: '' }} name="Login" component={Login} />
+          <LoginStack.Screen name="SignUp" component={SignUp} />
+          <LoginStack.Screen name="Home" component={MyAppTabScreen} />
+          <LoginStack.Screen name="ForgotPassword" component={ForgotPassword} />
+          <LoginStack.Screen name="PasswordChange" component={PasswordChange} />
+      </LoginStack.Navigator>
     </NavigationContainer>
-  );
+  )   
 }
 
 const styles = StyleSheet.create({

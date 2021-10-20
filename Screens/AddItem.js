@@ -5,9 +5,11 @@ import isURL from 'validator/lib/isURL';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import RNPickerSelect from 'react-native-picker-select';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
 import Colors from '../Constants/Colors';
-
+import { BASE_URL } from '../Constants/Api';
 
 const AddItem = ({ route }) => {
 
@@ -32,14 +34,9 @@ const AddItem = ({ route }) => {
 
     const navigation = useNavigation();
 
-    const { listId } = route.params;
+    const { listId, listName } = route.params;
     let { data } = route.params;
 
-    // console.log(itemDescription);
-    // console.log(itemDetail);
-    // console.log(link);
-    //console.log(links);
-    // console.log(buttonDisabled);
 
     useEffect(() => {
         if (link.length > 0) {
@@ -76,37 +73,41 @@ const AddItem = ({ route }) => {
     }};
 
 
-    const addItemToList = () => {
-        const newId = uuidv4();
-        const newItemToAdd = {
-            item: itemDescription,
-            itemId: newId,
-            detail: itemDetail,
-            price: itemPrice,
-            links: links
+    const addItemToList = async () => {
+
+        try {
+            const token = await SecureStore.getItemAsync('token')
+            const addedItemToList = await axios.post(`${BASE_URL}/lists/${listId}`, {
+                item: itemDescription,
+                detail: itemDetail,
+                price: itemPrice,
+                links: links
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            setItemDescription('');
+            setItemDetail('');
+            setLinks([]);
+            setItemPrice('');
+
+            navigation.reset({
+                index: 0,
+                routes: [{ name: "Chosen List", params: {
+                    listId,
+                    listName
+                } }],
+
+              })
+
+        } catch (e) {
+            console.log(e)
         }
-        
-        const currentListIndex = data.findIndex(list => list.listId === listId )
-   
-
-        //update the listItems array at this index
-
-        data[currentListIndex].listItems.push(newItemToAdd);
-        
-        setItemDescription('');
-        setItemDetail('');
-        setLinks([]);
-
-        navigation.navigate('Chosen List', {
-            listId: listId,
-            listName: data[currentListIndex].listName,
-            data: data
-        });
-
     }
 
-
-
+    
     return (
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView style={styles.KAVConatiner}>

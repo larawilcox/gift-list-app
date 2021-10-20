@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, View, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Modal, KeyboardAvoidingView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+ 
 import { Feather } from '@expo/vector-icons'; 
 import { AntDesign } from '@expo/vector-icons'; 
-import { Ionicons } from '@expo/vector-icons';
 
 import Colors from '../Constants/Colors';
+import { BASE_URL } from '../Constants/Api';
 
 import { Data as dataItems } from '../Data/DummyData';
 
@@ -18,30 +20,60 @@ const MyLists = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedList, setSelectedList] = useState('');
     const [selectedListId, setSelectedListId] = useState('');
+    const [listData, setListData] = useState([]);
+
+    const fetchData = async () => {
+        try {
+            const token = await SecureStore.getItemAsync('token')
+            const myLists = await axios.get(`${BASE_URL}/lists`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setListData(myLists.data);
+        } catch (e) {
+            console.log(e);
+        }
+
+
+    };
+
+    useEffect(() => {
+        void fetchData();
+    }, []);
 
 
     //function to delete list from the data file
-    const deleteListFromMyLists = () => {
-        const currentListIndex = dataItems.findIndex(list => list.listId === selectedListId);
-
-        dataItems.splice(currentListIndex, 1);
+    const deleteListFromMyLists = async () => {
+        console.log(selectedListId);
+        try {
+            const token = await SecureStore.getItemAsync('token')
+            const deletedList = await axios.delete(`${BASE_URL}/lists/${selectedListId}`, {
+                headers: {
+                    Authorization: `Bearer ${token} `
+                }
+            })
+            await fetchData()
+        } catch (e) {
+            console.log(e)
+        }
 
         setModalVisible(false);
 
-        navigation.navigate('My Lists');
     };
 
 
     const Item = ({ listName, listId, listDate, data }) => {
         const navigation = useNavigation();
-
+        
         //console.log('My Lists', dataItems);
         return (
-        <TouchableOpacity onPress={()=> navigation.navigate('Chosen List', {
-            listId: listId,
-            listName: listName,
-            data: data
-        })} style={styles.listItem}>
+        <TouchableOpacity onPress={()=> {
+            navigation.navigate('Chosen List', {
+                listId: listId,
+                listName: listName,
+                data: data
+            }); console.log(listName, listId)}} style={styles.listItem}>
             <Text style={styles.listNameText}>{listName}</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Share List', {listId: listId, data: data})}>
                 <Feather name="share" size={24} color="black" />
@@ -63,10 +95,10 @@ const MyLists = () => {
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView style={styles.KAVContainer}>
                 <FlatList 
-                    data={dataItems}
+                    data={listData}
                     renderItem={({ item }) => (
-                        <Item listName={item.listName} listId={item.listId} listDate={item.listDate} data={dataItems} />)}
-                    keyExtractor={item => item.listId}
+                        <Item listName={item.listName} listId={item._id} listDate={item.occasionDate} data={listData} />)}
+                    keyExtractor={item => item._id}
                     style={styles.list}
                 />
                 <Modal

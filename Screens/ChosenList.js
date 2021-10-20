@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, View, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Linking, Modal, KeyboardAvoidingView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
 import Colors from '../Constants/Colors';
+import { BASE_URL } from '../Constants/Api';
 
 import { Feather } from '@expo/vector-icons'; 
 import { AntDesign } from '@expo/vector-icons'; 
@@ -19,7 +22,7 @@ const priceValueOptions = [
 ];
 
 
-const Item = ({ listItem, itemId, detail, price, links, data, toggleDetail, setToggleDetail, currentList, deleteItemFromChosenList }) => {
+const Item = ({ listId, listItem, itemId, detail, price, links, toggleDetail, setToggleDetail, currentList, deleteItemFromChosenList }) => {
 
     const itemPrice = priceValueOptions.find(itemPrice => price === itemPrice.value);
     const [modalVisible, setModalVisible] = useState(false);
@@ -28,15 +31,13 @@ const Item = ({ listItem, itemId, detail, price, links, data, toggleDetail, setT
 
     const navigation = useNavigation();
 
-
-
     return (
     <TouchableOpacity onPress={()=> {setToggleDetail(toggleDetail === itemId ? '' : itemId)}} >
         {itemId === toggleDetail ? (
             <View style={styles.listItemDetail}>
                 <View style={styles.titleLine}>
                     <Text style={styles.listItemText, styles.listItemTextTitle}>{listItem}</Text> 
-                    <TouchableOpacity onPress={() => navigation.navigate('Edit Item', {data: data, itemId: itemId, listId: currentList.listId})}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Edit Item', {data: currentList, itemId: itemId, listId: currentList._id})}>
                         <Feather name="edit" size={24} color="black" />
                     </TouchableOpacity>
                     <View style={styles.spacer}></View>
@@ -62,7 +63,7 @@ const Item = ({ listItem, itemId, detail, price, links, data, toggleDetail, setT
         ) :
             <View style={styles.listItem}>
                 <Text style={styles.listItemText}>{listItem}</Text> 
-                <TouchableOpacity onPress={() => {navigation.navigate('Edit Item', {data: data, itemId: itemId, listId: currentList.listId}); setToggleDetail(itemId)}}>
+                <TouchableOpacity onPress={() => {navigation.navigate('Edit Item', {data: currentList, itemId: itemId, listId: currentList._id}); setToggleDetail(itemId)}}>
                     <Feather name="edit" size={24} color="black" />
                 </TouchableOpacity>
                 <View style={styles.spacer}></View>
@@ -80,7 +81,7 @@ const Item = ({ listItem, itemId, detail, price, links, data, toggleDetail, setT
                         <Text style={styles.text}>Delete Item</Text>
                         <Text style={styles.text}>{selectedItem} ?</Text>
                         <View style={styles.buttonContainer}>
-                            <TouchableOpacity style={styles.button} onPress={() => {deleteItemFromChosenList(selectedItemId, setModalVisible)}}>
+                            <TouchableOpacity style={styles.button} onPress={() => {deleteItemFromChosenList(listId, selectedItemId, setModalVisible)}}>
                                 <Text style={styles.buttonText}>Delete</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => {setModalVisible(false)}} style={styles.button}>
@@ -98,73 +99,98 @@ const Item = ({ listItem, itemId, detail, price, links, data, toggleDetail, setT
 
 
 const ChosenList = ({ route }) => {
+    const navigation = useNavigation();
     
     const { listId } = route.params;
-    let { data } = route.params;
-
-    const navigation = useNavigation();
-
-    const currentList = data.find(list => list.listId === listId);
-    let dataItems = currentList.listItems;
-
-    const currentListIndex = data.findIndex(list => list.listId === listId);
-
+    const [myCurrentList, setMyCurrentList] = useState({})
     const [toggleDetail, setToggleDetail] = useState();
 
+    const fetchData = async () => {
+        try {
+            console.log('Chosen list :', listId)
+            const token = await SecureStore.getItemAsync('token')
+            const myList = await axios.get(`${BASE_URL}/lists/${listId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setMyCurrentList(myList.data) 
+        } catch (e) {
+            console.log(e);
+        }
+    };
 
-    const deleteItemFromChosenList = (selectedItemId, setModalVisible) => {
-        const itemToDeleteIndex = data[currentListIndex].listItems.findIndex(item => item.itemId === selectedItemId);
+    useEffect(() => {
+        void fetchData();
+    }, [listId]);
+    
 
-        data[currentListIndex].listItems.splice(itemToDeleteIndex, 1)
-
-
+    const deleteItemFromChosenList = async (listId, selectedItemId, setModalVisible) => {
+        //console.log(selectedItemId);
+        try {
+            const token = await SecureStore.getItemAsync('token')
+            const deletedItem = await axios.delete(`${BASE_URL}/lists/${listId}/listItem/${selectedItemId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            await fetchData()
+        } catch (e) {
+            console.log(e)
+        }
         setModalVisible(false);
     }
 
+    //console.log(Object.keys(myCurrentList))
 
+        if (Object.keys(myCurrentList).length > 0) {
+            return ( 
+                <SafeAreaView style={styles.container}>
+                    <KeyboardAvoidingView style={styles.KAVContainer}>
+                            { (myCurrentList.listItems.length > 0) ? (
+                                <FlatList 
+                                    data={myCurrentList.listItems}
+                                    renderItem={({ item }) => (
+                                        <Item 
+                                            listId={listId}
+                                            listItem={item.item} 
+                                            itemId={item._id} 
+                                            detail={item.detail} 
+                                            price={item.price} 
+                                            links={item.links} 
+                                            toggleDetail={toggleDetail}
+                                            setToggleDetail={setToggleDetail}
+                                            deleteItemFromChosenList={deleteItemFromChosenList}
+                                            currentList={myCurrentList}
+                                            />)}
+                                    keyExtractor={item => item._id}
+                                    style={styles.list}
+                                />
+                                ) : (
+                                    <View style={styles.noItemsTextContainer}>
+                                        <Text style={styles.noItemsText}>There are no items on your list</Text>
+                                    </View>
+                                )
+                            }
+                        
+                        <TouchableOpacity style={styles.addItemButton} onPress={() => navigation.navigate('Add New Item', {
+                                listId: listId,
+                                listName: myCurrentList.listName
+                            })}
+                        >
+                            <Text style={styles.addItemText}>Add Item</Text>
+                        </TouchableOpacity>
+                    </KeyboardAvoidingView>
+                </SafeAreaView>
+          );
+        } else {
+            return null;
+        }
+    }
     
 
     
-    return (
-        <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView style={styles.KAVContainer}>
-                { (dataItems.length > 0) ? (
-                <FlatList 
-                    data={dataItems}
-                    renderItem={({ item }) => (
-                        <Item 
-                            listItem={item.item} 
-                            itemId={item.itemId} 
-                            detail={item.detail} 
-                            price={item.price} 
-                            links={item.links} 
-                            data={data} 
-                            toggleDetail={toggleDetail}
-                            setToggleDetail={setToggleDetail}
-                            currentList={currentList}
-                            deleteItemFromChosenList={deleteItemFromChosenList}
-                            />)}
-                    keyExtractor={item => item.itemId}
-                    style={styles.list}
-                />
-                ) : (
-                    <View style={styles.noItemsTextContainer}>
-                        <Text style={styles.noItemsText}>There are no items on your list</Text>
-                    </View>
-                )
-                }
-                
-                <TouchableOpacity style={styles.addItemButton} onPress={() => navigation.navigate('Add New Item', {
-                        listId: listId,
-                        data: data
-                    })}
-                >
-                    <Text style={styles.addItemText}>Add Item</Text>
-                </TouchableOpacity>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
-    )
-}
+                     
 
 const styles = StyleSheet.create({
     container: {
@@ -212,7 +238,8 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 50,
+        marginBottom: 30,
+        marginTop: 20,
         width: 300
     },
     addItemText:{

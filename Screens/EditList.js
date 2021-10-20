@@ -3,17 +3,17 @@ import { Text, View, StyleSheet, TextInput, SafeAreaView, TouchableOpacity, Keyb
 import { useNavigation } from '@react-navigation/native';
 import DatePicker from 'react-native-date-picker';
 import 'react-native-get-random-values';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
 import Colors from '../Constants/Colors';
-
+import { BASE_URL } from '../Constants/Api';
 
 const EditList = ({ route }) => {
 
     const navigation = useNavigation();
 
     const { oldListName, oldListId, oldListDate } = route.params;
-    let { data } = route.params;
-
     const [listName, setListName] = useState(oldListName);
     const [date, setDate] = useState(new Date(oldListDate));
     const [buttonDisabled, setButtonDisabled] = useState(true);
@@ -28,19 +28,25 @@ const EditList = ({ route }) => {
     }, [listName]);
 
 
-    const EditList = () => {
-        const currentListIndex = data.findIndex(list => list.listId === oldListId);
+    const EditList = async () => {
 
-        data[currentListIndex].listName = listName;
-        data[currentListIndex].listDate = date.toDateString();
+        try {
+            const token = await SecureStore.getItemAsync('token')
+            const editList = await axios.patch(`${BASE_URL}/lists/${oldListId}`, {
+                listName,
+                occasionDate: date,
 
-        console.log(data);
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
 
-        navigation.navigate('Chosen List', {
-            listId: data[currentListIndex].listId,
-            listName: data[currentListIndex].listName,
-            data: data
-        });
+            navigation.navigate('My Lists');
+        } catch (e) {
+            console.log(e)
+        }
+
 
     };
 

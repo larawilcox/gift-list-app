@@ -2,7 +2,7 @@
   "main": "index.js",
   "scripts": {
     "android": "react-native run-android",
-    "ios": "react-native run-ios --simulator='iPhone 8'",
+    "ios": "react-native run-ios --simulator='iPhone 11'",
     "web": "expo start --web",
     "start": "react-native start",
     "test": "jest"
@@ -13,7 +13,9 @@
     "@react-navigation/bottom-tabs": "^5.11.8",
     "@react-navigation/native": "^5.9.3",
     "@react-navigation/stack": "^5.14.3",
+    "axios": "^0.22.0",
     "expo": "~40.0.0",
+    "expo-secure-store": "~9.3.0",
     "expo-splash-screen": "~0.8.0",
     "expo-status-bar": "~1.0.3",
     "expo-updates": "~0.4.0",

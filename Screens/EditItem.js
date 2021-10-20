@@ -5,8 +5,11 @@ import isURL from 'validator/lib/isURL';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import RNPickerSelect from 'react-native-picker-select';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
 import Colors from '../Constants/Colors';
+import { BASE_URL } from '../Constants/Api';
 
 import { Feather } from '@expo/vector-icons'; 
 import { AntDesign } from '@expo/vector-icons'; 
@@ -18,8 +21,9 @@ const EditItem = ({ route }) => {
     const { listId, itemId } = route.params;
     let { data } = route.params;
 
-    const currentList = data.find(list => list.listId === listId);
-    const currentItem = currentList.listItems.find(item => item.itemId === itemId);
+    console.log('listId: ', listId)
+
+    const currentItem = data.listItems.find(item => item._id === itemId);
 
 
     const [itemDescription, setItemDescription] = useState(currentItem.item);
@@ -47,9 +51,7 @@ const EditItem = ({ route }) => {
         { label: 'Over £100', value: '5' },
     ];
 
-
-    const currentListIndex = data.findIndex(list => list.listId === listId);
-    const currentItemIndex = currentList.listItems.findIndex(item => item.itemId === itemId);
+    //const currentItemIndex = data.listItems.findIndex(item => item._id === itemId);
 
     const navigation = useNavigation();
 
@@ -117,19 +119,34 @@ const EditItem = ({ route }) => {
         }
     };
 
-    const saveItemChanges = () => {
-        data[currentListIndex].listItems[currentItemIndex].item = itemDescription;
-        data[currentListIndex].listItems[currentItemIndex].detail = itemDetail;
-        data[currentListIndex].listItems[currentItemIndex].price = itemPrice;
-        data[currentListIndex].listItems[currentItemIndex].links = links;
+    const saveItemChanges = async () => {
 
-        console.log(itemPrice);
+        try {
+            console.log('ItemId:', itemId)
+            const token = await SecureStore.getItemAsync('token')
+            const editItem = await axios.patch(`${BASE_URL}/lists/${listId}/listItem/${itemId}`, {
+                item: itemDescription,
+                detail: itemDetail,
+                price: itemPrice,
+                links
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
 
-        navigation.navigate('Chosen List', {
-            listId: listId,
-            listName: data[currentListIndex].listName,
-            data: data
-        });
+            navigation.reset({
+                index: 0,
+                routes: [{ name: "Chosen List", params: {
+                    listId,
+                    listName: data.listName
+                } }],
+
+              })
+
+        } catch (e) {
+            console.log(e)
+        }
     }
 
 

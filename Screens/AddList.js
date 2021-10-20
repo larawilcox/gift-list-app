@@ -3,10 +3,11 @@ import { Text, View, StyleSheet, TextInput, SafeAreaView, TouchableOpacity, Keyb
 import { useNavigation } from '@react-navigation/native';
 import DatePicker from 'react-native-date-picker';
 import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
 import Colors from '../Constants/Colors';
-
+import { BASE_URL } from '../Constants/Api';
 
 const AddList = ({ route }) => {
 
@@ -18,8 +19,6 @@ const AddList = ({ route }) => {
     const [date, setDate] = useState(new Date());
     const [buttonDisabled, setButtonDisabled] = useState(true);
     
-    // console.log('listName', listName);
-    // console.log('list Date', date)
 
     useEffect(() => {
         if (listName.length > 0) {
@@ -31,28 +30,28 @@ const AddList = ({ route }) => {
 
 
 
-    const addListToMyLists = () => {
-        const newId = uuidv4();
-        const listToAdd = {
-            listName: listName,
-            listDate: date.toDateString(),
-            listId: newId,
-            listItems: []
+    const addListToMyLists = async () => {
+        try {
+            const token = await SecureStore.getItemAsync('token')
+            const addList = await axios.post(`${BASE_URL}/lists`, {
+                listName,
+                occasionDate: date
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            data.push(addList.data)
+
+            navigation.navigate('Add New Item', {
+                listId: addList.data._id,
+                listName,
+                data: data
+            });
+        } catch (e) {
+            console.log(e)
         }
-        
-        // console.log('New List', listToAdd);
-
-        //I have done it like this because you told me that it would be ok.....
-        //data = [...data, listToAdd];
-        data.push(listToAdd);
-
-        // console.log(data);
-
-        navigation.navigate('Add New Item', {
-            listId: newId,
-            data: data
-        });
-
     }
 
 

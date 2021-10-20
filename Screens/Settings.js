@@ -1,20 +1,38 @@
 import React, { useState } from 'react';
-import { useReducer } from 'react';
 import { Text, View, StyleSheet, SafeAreaView, KeyboardAvoidingView, TextInput, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+
 
 import Colors from '../Constants/Colors';
+import { BASE_URL } from '../Constants/Api';
 
 import { userData } from '../Data/UserData';
 
 const Settings = () => {
-    
+    const navigation = useNavigation();
 
     const [forename, setForename] = useState(userData.forename);
     const [surname, setSurname] = useState(userData.surname);
     const [email, setEmail] = useState(userData.email);
 
-    console.log(userData);
+    const logout = async () => {
+        
+        try {
+            const token = await SecureStore.getItemAsync('token')
+            const logoutUser = await axios.post(`${BASE_URL}/users/logout`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token} `
+                }
+            })
+            await SecureStore.deleteItemAsync('token')
+        navigation.navigate('Login')
+        } catch (e) {
+            console.log(e)
+        }
 
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -48,6 +66,10 @@ const Settings = () => {
                 </View>
                 <TouchableOpacity style={styles.newListButton} onPress={() => {}}>
                     <Text style={styles.newListText}>Save Changes</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.newListButton} onPress={logout}>
+                    <Text style={styles.newListText}>Logout</Text>
                 </TouchableOpacity>
             </KeyboardAvoidingView>
         </SafeAreaView>
