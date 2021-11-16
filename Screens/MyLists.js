@@ -6,6 +6,7 @@ import * as SecureStore from 'expo-secure-store';
  
 import { Feather } from '@expo/vector-icons'; 
 import { AntDesign } from '@expo/vector-icons'; 
+import { Octicons } from '@expo/vector-icons';
 
 import Colors from '../Constants/Colors';
 import { BASE_URL } from '../Constants/Api';
@@ -43,24 +44,8 @@ const MyLists = () => {
     }, []);
 
 
-    //function to delete list from the data file
-    const deleteListFromMyLists = async () => {
-        console.log(selectedListId);
-        try {
-            const token = await SecureStore.getItemAsync('token')
-            const deletedList = await axios.delete(`${BASE_URL}/lists/${selectedListId}`, {
-                headers: {
-                    Authorization: `Bearer ${token} `
-                }
-            })
-            await fetchData()
-        } catch (e) {
-            console.log(e)
-        }
 
-        setModalVisible(false);
 
-    };
 
 
     const Item = ({ listName, listId, listDate, data }) => {
@@ -70,12 +55,14 @@ const MyLists = () => {
         return (
         <TouchableOpacity onPress={()=> {
             navigation.navigate('Chosen List', {
-                listId: listId,
-                listName: listName,
-                data: data
+                listId,
+                listName,
+                listDate
             }); console.log(listName, listId)}} style={styles.listItem}>
-            <Text style={styles.listNameText}>{listName}</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Share List', {listId: listId, data: data})}>
+                <Text style={styles.listNameText}>{listName}</Text>
+                <Octicons name="chevron-right" size={24} color={Colors.textDark} />
+                
+            {/* <TouchableOpacity onPress={() => navigation.navigate('Share List', {listId: listId, data: data})}>
                 <Feather name="share" size={24} color="black" />
             </TouchableOpacity>
             <View style={styles.spacer}></View>
@@ -85,7 +72,7 @@ const MyLists = () => {
             <View style={styles.spacer}></View>
             <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedList(listName); setSelectedListId(listId)}}>
                 <AntDesign name="delete" size={24} color="black" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
         </TouchableOpacity>
     )};
 
@@ -94,33 +81,36 @@ const MyLists = () => {
     return (
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView style={styles.KAVContainer}>
-                <FlatList 
-                    data={listData}
-                    renderItem={({ item }) => (
-                        <Item listName={item.listName} listId={item._id} listDate={item.occasionDate} data={listData} />)}
-                    keyExtractor={item => item._id}
-                    style={styles.list}
-                />
-                <Modal
-                    visible={modalVisible}
-                    transparent={true}
-                >
-                        <View style={styles.contentContainer}>
-                            <Text style={styles.text}>Delete List</Text>
-                            <Text style={styles.text}>{selectedList} ?</Text>
-                            <View style={styles.buttonContainer}>
-                                <TouchableOpacity style={styles.button} onPress={deleteListFromMyLists}>
-                                    <Text style={styles.buttonText}>Delete</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => {setModalVisible(false)}} style={styles.button}>
-                                    <Text style={styles.buttonText}>Cancel</Text>
-                                </TouchableOpacity>
+                <View style={styles.header}></View>
+                <View style={styles.listView}>
+                    <FlatList 
+                        data={listData}
+                        renderItem={({ item }) => (
+                            <Item listName={item.listName} listId={item._id} listDate={item.occasionDate} data={listData} />)}
+                        keyExtractor={item => item._id}
+                        style={styles.list}
+                    />
+                    {/* <Modal
+                        visible={modalVisible}
+                        transparent={true}
+                    >
+                            <View style={styles.contentContainer}>
+                                <Text style={styles.text}>Delete List</Text>
+                                <Text style={styles.text}>{selectedList} ?</Text>
+                                <View style={styles.buttonContainer}>
+                                    <TouchableOpacity style={styles.button} onPress={deleteListFromMyLists}>
+                                        <Text style={styles.buttonText}>Delete</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => {setModalVisible(false)}} style={styles.button}>
+                                        <Text style={styles.buttonText}>Cancel</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-                        </View>
-                </Modal>
-                <TouchableOpacity style={styles.newListButton} onPress={() => navigation.navigate('Add New List', {data: dataItems})}>
-                    <Text style={styles.newListText}>Add a new list</Text>
-                </TouchableOpacity>
+                    </Modal> */}
+                    <TouchableOpacity style={styles.newListButton} onPress={() => navigation.navigate('Add New List', {data: dataItems})}>
+                        <Text style={styles.newListText}>Add a new list</Text>
+                    </TouchableOpacity>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     )
@@ -133,48 +123,73 @@ const styles = StyleSheet.create({
         color: Colors.textLight,
         justifyContent: 'center',
         alignItems: 'center',
+        width: '100%',
+        height: '100%'
     },
     KAVContainer: {
         flex: 1,
+        width: '100%',
+        height: '100%',
         alignItems: 'center'
+    },
+    header: {
+        height: 80,
+        width: '100%',
+        backgroundColor: Colors.primary,
+        color: 'black'
     },
     listItem: {
         flexDirection: 'row',
-        minHeight: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        borderRadius: 15,
+        minHeight: 70,
+        borderRadius: 5,
         justifyContent: 'flex-start',
         alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: 20,
         marginLeft: 9,
         width: '95%',
-        paddingRight: 12
+        paddingRight: 12,
+        backgroundColor: Colors.secondary,
+        //shadow and elevation props
+        shadowColor: '#2B2D2F',
+        shadowOffset: {width: 4, height: 4},
+        shadowOpacity: 0.9,
+        shadowRadius: 10,
+        elevation: 20,
+        shadowColor: '#A9A9A9',
+    },
+    listView:{
+        flex: 1,
+        paddingTop: 50,
+        zIndex: 100,
+        position: 'absolute',
+        height: '100%',
+        alignItems: 'center'
     },
     list: {
-        paddingTop: 30
+        flex: 1
     },
     listNameText: {
-        fontSize: 18,
-        color: Colors.primary,
+        fontSize: 20,
+        color: Colors.textDark,
         textAlign: 'left',
-        width: '75%',
-        paddingLeft: 20
+        width: '95%',
+        paddingLeft: 20,
+        fontWeight: 'bold'
     },
     newListButton:{
-        height: 50,
+        height: 60,
         borderWidth: 2,
-        borderColor: Colors.primary,
-        backgroundColor: Colors.primary,
-        borderRadius: 15,
+        borderColor: Colors.button,
+        backgroundColor: Colors.button,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 50,
-        width: 300
+        width: 250
     },
     newListText:{
-        color: Colors.background,
-        fontSize: 18,
+        color: Colors.textLight,
+        fontSize: 22,
         fontWeight: 'bold'
     },
     spacer: {

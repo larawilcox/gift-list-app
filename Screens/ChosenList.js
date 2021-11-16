@@ -9,7 +9,7 @@ import { BASE_URL } from '../Constants/Api';
 
 import { Feather } from '@expo/vector-icons'; 
 import { AntDesign } from '@expo/vector-icons'; 
-
+import { FontAwesome } from '@expo/vector-icons';
 
 
 const priceValueOptions = [
@@ -22,10 +22,9 @@ const priceValueOptions = [
 ];
 
 
-const Item = ({ listId, listItem, itemId, detail, price, links, toggleDetail, setToggleDetail, currentList, deleteItemFromChosenList }) => {
+const Item = ({ listItem, itemId, detail, price, links, toggleDetail, setToggleDetail, currentList }) => {
 
     const itemPrice = priceValueOptions.find(itemPrice => price === itemPrice.value);
-    const [modalVisible, setModalVisible] = useState(false);
     const [selectedItem, setSelectedItem] = useState('');
     const [selectedItemId, setSelectedItemId] = useState('');
 
@@ -38,12 +37,12 @@ const Item = ({ listId, listItem, itemId, detail, price, links, toggleDetail, se
                 <View style={styles.titleLine}>
                     <Text style={styles.listItemText, styles.listItemTextTitle}>{listItem}</Text> 
                     <TouchableOpacity onPress={() => navigation.navigate('Edit Item', {data: currentList, itemId: itemId, listId: currentList._id})}>
-                        <Feather name="edit" size={24} color="black" />
+                        <Feather name="edit" size={24} color={Colors.textDark} />
                     </TouchableOpacity>
                     <View style={styles.spacer}></View>
-                    <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedItem(listItem); setSelectedItemId(itemId)}}>
+                    {/* <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedItem(listItem); setSelectedItemId(itemId)}}>
                         <AntDesign name="delete" size={24} color="black" />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
                 { price ?  
                     <Text style={styles.listItemText}>{itemPrice.label}</Text>
@@ -62,34 +61,16 @@ const Item = ({ listId, listItem, itemId, detail, price, links, toggleDetail, se
             </View>
         ) :
             <View style={styles.listItem}>
-                <Text style={styles.listItemText}>{listItem}</Text> 
+                <Text style={styles.listItemText} style={styles.listItemTextTitle}>{listItem}</Text> 
                 <TouchableOpacity onPress={() => {navigation.navigate('Edit Item', {data: currentList, itemId: itemId, listId: currentList._id}); setToggleDetail(itemId)}}>
-                    <Feather name="edit" size={24} color="black" />
+                    <Feather name="edit" size={24} color={Colors.textDark} />
                 </TouchableOpacity>
                 <View style={styles.spacer}></View>
-                <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedItem(listItem); setSelectedItemId(itemId)}}>
+                {/* <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedItem(listItem); setSelectedItemId(itemId)}}>
                     <AntDesign name="delete" size={24} color="black" />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
              </View>
         }
-
-            <Modal
-                visible={modalVisible}
-                transparent={true}
-            >
-                    <View style={styles.contentContainer}>
-                        <Text style={styles.text}>Delete Item</Text>
-                        <Text style={styles.text}>{selectedItem} ?</Text>
-                        <View style={styles.buttonContainer}>
-                            <TouchableOpacity style={styles.button} onPress={() => {deleteItemFromChosenList(listId, selectedItemId, setModalVisible)}}>
-                                <Text style={styles.buttonText}>Delete</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => {setModalVisible(false)}} style={styles.button}>
-                                <Text style={styles.buttonText}>Cancel</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-            </Modal>
 
     </TouchableOpacity>
   )
@@ -101,9 +82,20 @@ const Item = ({ listId, listItem, itemId, detail, price, links, toggleDetail, se
 const ChosenList = ({ route }) => {
     const navigation = useNavigation();
     
-    const { listId } = route.params;
+    const { listId, listName, listDate } = route.params;
     const [myCurrentList, setMyCurrentList] = useState({})
     const [toggleDetail, setToggleDetail] = useState();
+    console.log(myCurrentList)
+
+    React.useLayoutEffect(() => {
+        navigation.setOptions({
+          headerRight: () => (
+            <TouchableOpacity style={styles.editListButton} onPress={() => navigation.navigate('Edit List', {oldListName: listName, oldListId: listId, oldListDate: listDate })}>
+                <FontAwesome name="edit" size={24} color={Colors.textLight} />
+            </TouchableOpacity>
+          ),
+        });
+      }, [navigation]);
 
     const fetchData = async () => {
         try {
@@ -125,31 +117,21 @@ const ChosenList = ({ route }) => {
     }, [listId]);
     
 
-    const deleteItemFromChosenList = async (listId, selectedItemId, setModalVisible) => {
-        //console.log(selectedItemId);
-        try {
-            const token = await SecureStore.getItemAsync('token')
-            const deletedItem = await axios.delete(`${BASE_URL}/lists/${listId}/listItem/${selectedItemId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-            await fetchData()
-        } catch (e) {
-            console.log(e)
-        }
-        setModalVisible(false);
-    }
-
     //console.log(Object.keys(myCurrentList))
 
         if (Object.keys(myCurrentList).length > 0) {
             return ( 
                 <SafeAreaView style={styles.container}>
                     <KeyboardAvoidingView style={styles.KAVContainer}>
+                        <View style={styles.header}></View>
+                        <TouchableOpacity style={styles.shareListButton} onPress={() => {}}>
+                            <Text style={styles.shareListButtonText}>Share this list</Text>
+                            <Feather name="share" size={24} color={Colors.textLight} />
+                        </TouchableOpacity>
                             { (myCurrentList.listItems.length > 0) ? (
                                 <FlatList 
                                     data={myCurrentList.listItems}
+                                    showsVerticalScrollIndicator={false}
                                     renderItem={({ item }) => (
                                         <Item 
                                             listId={listId}
@@ -160,7 +142,6 @@ const ChosenList = ({ route }) => {
                                             links={item.links} 
                                             toggleDetail={toggleDetail}
                                             setToggleDetail={setToggleDetail}
-                                            deleteItemFromChosenList={deleteItemFromChosenList}
                                             currentList={myCurrentList}
                                             />)}
                                     keyExtractor={item => item._id}
@@ -178,7 +159,7 @@ const ChosenList = ({ route }) => {
                                 listName: myCurrentList.listName
                             })}
                         >
-                            <Text style={styles.addItemText}>Add Item</Text>
+                            <Text style={styles.addItemText}>Add a new item</Text>
                         </TouchableOpacity>
                     </KeyboardAvoidingView>
                 </SafeAreaView>
@@ -195,30 +176,78 @@ const ChosenList = ({ route }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        width: '100%',
         backgroundColor: Colors.background,
         color: Colors.textLight,
         justifyContent: 'center',
         alignItems: 'center'
     },
     KAVContainer: {
+        position: 'relative',
         flex: 1,
+        width: '100%',
         alignItems: 'center'
     },
     listItem: {
-        minHeight: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        borderRadius: 15,
         flexDirection: 'row',
+        minHeight: 70,
+        borderRadius: 5,
         justifyContent: 'flex-start',
-        alignItems: 'flex-start',
-        marginBottom: 10,
-        marginLeft: 8,
+        alignItems: 'center',
+        marginBottom: 20,
+        marginLeft: 9,
         width: '95%',
-        paddingRight: 10,
-        paddingBottom: 10,
-        paddingTop: 10,
+        //paddingRight: 12,
+        backgroundColor: Colors.secondary,
+        //shadow and elevation props
+        shadowColor: '#2B2D2F',
+        shadowOffset: {width: 4, height: 4},
+        shadowOpacity: 0.9,
+        shadowRadius: 10,
+        elevation: 20,
+        shadowColor: '#A9A9A9',
+    },
+    // listItem: {
+    //     minHeight: 50,
+    //     borderWidth: 2,
+    //     borderColor: Colors.primary,
+    //     borderRadius: 15,
+    //     flexDirection: 'row',
+    //     justifyContent: 'flex-start',
+    //     alignItems: 'flex-start',
+    //     marginBottom: 10,
+    //     marginLeft: 8,
+    //     width: '95%',
+    //     paddingRight: 10,
+    //     paddingBottom: 10,
+    //     paddingTop: 10,
         
+    // },
+    header: {
+        height: 80,
+        width: '100%',
+        backgroundColor: Colors.primary,
+        color: 'black'
+    },
+    shareListButton: {
+        flexDirection: 'row',
+        backgroundColor: Colors.button,
+        borderRadius: 5,
+        width: '90%',
+        height: 70,
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'absolute',
+        zIndex: 100,
+        marginTop: 45,
+        marginBottom: 10
+    },
+    shareListButtonText: {
+        color: Colors.textLight,
+        textAlign: 'center',
+        fontWeight: 'bold',
+        fontSize: 20,
+        paddingRight: 10
     },
     title: {
         paddingTop: 60,
@@ -228,23 +257,26 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
     list: {
-        paddingTop: 30
+        paddingTop: 60,
+        paddingBottom: 100,
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0
     },
     addItemButton:{
-        height: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        backgroundColor: Colors.primary,
-        borderRadius: 15,
+        height: 60,
+        backgroundColor: Colors.button,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 30,
         marginTop: 20,
-        width: 300
+        width: 250
     },
     addItemText:{
-        color: Colors.background,
-        fontSize: 18,
+        color: Colors.textLight,
+        fontSize: 22,
         fontWeight: 'bold'
     },
     listItemTextTitle: {
@@ -253,7 +285,7 @@ const styles = StyleSheet.create({
         paddingBottom: 5,
         fontWeight: 'bold',
         textAlign: 'left',
-        width: '83%',
+        width: '87%',
         paddingLeft: 20
     },
     noItemsTextContainer: {
@@ -274,21 +306,28 @@ const styles = StyleSheet.create({
         color: Colors.primary,
         paddingBottom: 5,
         textAlign: 'left',
-        width: '83%',
+        width: '87%',
         paddingLeft: 20
     },
     listItemDetail: {
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        borderRadius: 15,
+        minHeight: 70,
+        borderRadius: 5,
         justifyContent: 'center',
         alignItems: 'flex-start',
         marginBottom: 10,
-        marginLeft: 8,
+        marginLeft: 9,
         width: '95%',
         paddingTop: 15,
         paddingBottom: 15,
-        paddingRight: 10
+        //paddingRight: 10,
+        backgroundColor: Colors.secondary,
+        //shadow and elevation props
+        shadowColor: '#2B2D2F',
+        shadowOffset: {width: 4, height: 4},
+        shadowOpacity: 0.9,
+        shadowRadius: 10,
+        elevation: 20,
+        shadowColor: '#A9A9A9',
     },
     titleLine: {
         flexDirection: 'row',
@@ -348,6 +387,9 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold'
     },
+    editListButton:{
+        paddingRight: 15
+    }
 })
 
 export default ChosenList;

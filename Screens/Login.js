@@ -3,6 +3,7 @@ import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, SafeAreaVie
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Colors from '../Constants/Colors';
 import { BASE_URL } from '../Constants/Api';
@@ -27,6 +28,7 @@ const Login = () => {
             })
 
             await SecureStore.setItemAsync('token', login.data.token);
+            await AsyncStorage.setItem('userId', login.data.user._id);
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'Home' }],
@@ -189,7 +191,7 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     buttonText: {
-        color: Colors.secondary,
+        color: Colors.textLight,
         fontSize: 25,
         fontWeight: 'bold'
     },

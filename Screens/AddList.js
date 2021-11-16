@@ -58,7 +58,8 @@ const AddList = ({ route }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView>
+            <View style={styles.header}></View>
+            <KeyboardAvoidingView style={styles.KAVContainer}>
                 <View style={styles.input}>
                     <Text style={styles.headerText}>List Name:</Text>
                     <TextInput
@@ -93,9 +94,28 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'center',
         // paddingTop: 50
+        position: 'relative',
+    },
+    KAVContainer: {
+        flex: 1,
+        alignItems: 'center',
+        position: 'absolute',
+        zIndex: 100,
+        marginTop: 45
     },
     input: {
-        flex: 1
+        width: 380,
+        backgroundColor: Colors.secondary,
+        paddingBottom: 20,
+        justifyContent: 'center',
+        //shadow and elevation props
+        shadowColor: '#2B2D2F',
+        shadowOffset: {width: 4, height: 4},
+        shadowOpacity: 0.9,
+        shadowRadius: 10,
+        elevation: 20,
+        shadowColor: '#A9A9A9',
+        flex: 1,
     },
     headerText: {
         fontSize: 18,
@@ -103,29 +123,30 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'left',
         paddingBottom: 10,
-        paddingTop: 40
+        paddingTop: 40,
+        paddingLeft: 20
     },
     listInput: {
         minHeight: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        borderRadius: 15,
-        width: 300,
-        paddingLeft: 20,
+        borderRadius: 5,
+        width: '90%',
+        marginLeft: 20,
+        paddingLeft: 10,
         fontSize: 18,
-        color: Colors.primary,
-        textAlign: 'left'
+        backgroundColor: Colors.background,
+        color: Colors.textDark,
+        textAlign: 'left',
+        justifyContent: 'center'
     },
     newListButton:{
-        height: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        backgroundColor: Colors.primary,
-        borderRadius: 15,
+        height: 60,
+        backgroundColor: Colors.button,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 50,
-        width: 300
+        width: 250,
+        marginTop: 50,
     },
     newListText:{
         color: Colors.background,
@@ -133,12 +154,15 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
     datePicker: {
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        borderRadius: 15,
-        width: 300,
+        width: 380,
         paddingLeft: 20,
-    }
+    },
+    header: {
+        height: 80,
+        width: '100%',
+        backgroundColor: Colors.primary,
+        color: 'black'
+    },
 })
 
 export default AddList;

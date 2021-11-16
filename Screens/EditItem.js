@@ -11,8 +11,9 @@ import * as SecureStore from 'expo-secure-store';
 import Colors from '../Constants/Colors';
 import { BASE_URL } from '../Constants/Api';
 
-import { Feather } from '@expo/vector-icons'; 
 import { AntDesign } from '@expo/vector-icons'; 
+import { FontAwesome } from '@expo/vector-icons'; 
+import { Ionicons } from '@expo/vector-icons';
 
 
 
@@ -21,7 +22,9 @@ const EditItem = ({ route }) => {
     const { listId, itemId } = route.params;
     let { data } = route.params;
 
-    console.log('listId: ', listId)
+
+    // console.log('itemId: ', itemId)
+    // console.log('listId: ', listId)
 
     const currentItem = data.listItems.find(item => item._id === itemId);
 
@@ -35,12 +38,11 @@ const EditItem = ({ route }) => {
     const [buttonDisabled, setButtonDisabled] = useState(true);
     const [saveButtonDisabled, setSaveButtonDisabled] = useState(true);
     const [linkError, setLinkError] = useState('');
-    const [modalVisible, setModalVisible] = useState(false);
-    const [addLinkModalVisible, setAddLinkModalVisible] = useState(false);
     const [editLinkModalVisible, setEditLinkModalVisible] = useState(false);
     const [selectedLinkDescription, setSelectedLinkDescription] = useState('');
     const [selectedLinkLink, setSelectedLinkLink] = useState('');
     const [selectedLinkId, setSelectedLinkId] = useState('');
+    const [linkInputVisible, setLinkInputVisible] = useState(false);
 
     const priceValueOptions = [
         { label: 'Unspecified', value: '0' },
@@ -86,7 +88,7 @@ const EditItem = ({ route }) => {
             setLinkDescription('');
             setLink('');
             setLinkError('');
-            setAddLinkModalVisible(false);
+            setLinkInputVisible(false);
     } else {
             setLinkError('This is not a valid URL')
     }};
@@ -97,7 +99,7 @@ const EditItem = ({ route }) => {
 
         links.splice(linkToDeleteIndex, 1);
 
-        setModalVisible(false);
+        setEditLinkModalVisible(false);
 
     };
 
@@ -118,6 +120,7 @@ const EditItem = ({ route }) => {
             setLinkError('This is not a valid URL')
         }
     };
+
 
     const saveItemChanges = async () => {
 
@@ -149,140 +152,99 @@ const EditItem = ({ route }) => {
         }
     }
 
+    const deleteItemFromChosenList = async (listId, itemId) => {
+        try {
+            const token = await SecureStore.getItemAsync('token')
+            const deletedItem = await axios.delete(`${BASE_URL}/lists/${listId}/listItem/${itemId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            navigation.reset({
+                index: 0,
+                routes: [{ name: "Chosen List", params: {
+                    listId,
+                    listName: data.listName
+                } }],
+
+              })
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
 
 
 
     return (
         <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView>
+            <View style={styles.header}></View>
+            <KeyboardAvoidingView style={styles.KAVContainer}>
                 <ScrollView
                     style={styles.inputContainer}
                     contentContainerStyle={styles.inputContentContainer}
                     keyboardShouldPersistTaps='always'>
                     <View style={styles.input}>
-                        <Text style={styles.headerText}>Item Description</Text>
+                        <View style={styles.inputDetails}>
+                            <Text style={styles.headerText}>Item Description</Text>
+                                <TextInput
+                                    style={styles.listInput}
+                                    onChangeText={setItemDescription}
+                                    value={itemDescription}
+                                    multiline={true}
+                                    textAlignVertical='center'
+                                    autoCorrect={false}
+                                />
+                            <Text style={styles.headerText}>Item Detail</Text>
                             <TextInput
                                 style={styles.listInput}
-                                onChangeText={setItemDescription}
-                                value={itemDescription}
+                                onChangeText={setItemDetail}
+                                value={itemDetail}
                                 multiline={true}
                                 textAlignVertical='center'
                                 autoCorrect={false}
                             />
-                        <Text style={styles.headerText}>Item Detail</Text>
-                        <TextInput
-                            style={styles.listInput}
-                            onChangeText={setItemDetail}
-                            value={itemDetail}
-                            multiline={true}
-                            textAlignVertical='center'
-                            autoCorrect={false}
-                        />
-                        <Text style={styles.headerText}>Price Range</Text>
-                        <View style={styles.listInput}>
-                            <RNPickerSelect
-                                onValueChange={setItemPrice}
-                                items={priceValueOptions}
-                                textInputProps={styles.priceInput}
-                                value={itemPrice}
-                            />
-                        </View>
-                        <View style={styles.linkHeaderContainer}>
-                            <Text style={styles.headerTextLinks}>Links</Text>
-                            <TouchableOpacity onPress={() => setAddLinkModalVisible(true)}>
-                                <Feather name="plus" size={24} color="black" style={styles.addLinkIcon} />
-                            </TouchableOpacity>
+                            <Text style={styles.headerText}>Price Range</Text>
+                            <View style={styles.listInput}>
+                                <RNPickerSelect
+                                    onValueChange={setItemPrice}
+                                    items={priceValueOptions}
+                                    textInputProps={styles.priceInput}
+                                    value={itemPrice}
+                                />
+                            </View>
                         </View>
 
-                        <Modal
-                            visible={addLinkModalVisible}
-                        >
-                            <SafeAreaView style={styles.container}> 
-                                <KeyboardAvoidingView>
-                                <ScrollView
-                                    style={styles.inputContainer}
-                                    contentContainerStyle={styles.inputContentContainer}
-                                    keyboardShouldPersistTaps='always'>
-                                    <View style={styles.modalContent}>
-                                        <View style={styles.inputModal}>
-                                            <Text style={styles.modalHeaderText}>Add Link</Text>
-                                            <View style={styles.input}>
-                                                <Text style={styles.headerText}>Link Description</Text>
-                                                <View style={styles.listInputView}>
-                                                    <TextInput
-                                                        style={styles.linkListInput}
-                                                        onChangeText={setLinkDescription}
-                                                        value={linkDescription}
-                                                        multiline={true}
-                                                        textAlignVertical='center'
-                                                        autoCorrect={false}
-                                                    />
-                                                    {linkDescription.length > 0 ? (
-                                                    <TouchableOpacity style={styles.clearTextButton} onPress={() => setLinkDescription('')}>
-                                                        <AntDesign name="close" size={16} color={Colors.primary} />
-                                                    </TouchableOpacity>
-                                                    ) : null
-                                                    }           
-                                                </View>
-                                                <Text style={styles.headerText}>Link</Text>
-                                                <View style={styles.listInputView}>
-                                                    <TextInput
-                                                        style={styles.linkListInput}
-                                                        onChangeText={setLink}
-                                                        value={link}
-                                                        multiline={true}
-                                                        textAlignVertical='center'
-                                                        keyboardType='email-address'
-                                                        autoCorrect={false}
-                                                        autoCapitalize="none"
-                                                    />
-                                                    {link.length > 0 ? (
-                                                    <TouchableOpacity style={styles.clearTextButton} onPress={() => setLink('')}>
-                                                        <AntDesign name="close" size={16} color={Colors.primary} />
-                                                    </TouchableOpacity>
-                                                    ) : null
-                                                    }  
-                                                </View>
-                                                {linkError ? (
-                                                    <Text style={styles.listInputText}>{linkError}</Text>    
-                                                ) : null }
-                                        </View>
-                                        </View>
-                                        <View style={styles.modalButtonContainer}>
-                                            <TouchableOpacity style={styles.modalButton} onPress={saveNewLinkToArray}>
-                                                <Text style={styles.modalButtonText}>Save Link</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity onPress={() => {setAddLinkModalVisible(false); setLink(''); setLinkDescription('')}} style={styles.modalButton}>
-                                                <Text style={styles.modalButtonText}>Cancel</Text>
-                                            </TouchableOpacity>
-                                        </View>
+
+                        <View style={styles.inputDetails}>
+                            <Text style={styles.headerText}>Links</Text>
+                            {links.map((link, i) => (
+                                <View key={i} style={styles.linkList}>
+                                    <View style={styles.linkHeaderContainer}>
+                                        <Text style={styles.listInputTextBold}>{link.linkDescription}</Text>
+                                        <TouchableOpacity style={styles.editButton} onPress={() => {setEditLinkModalVisible(true); setSelectedLinkDescription(link.linkDescription); setSelectedLinkLink(link.link); setSelectedLinkId(link.linkId)}}>
+                                            <FontAwesome name="edit" size={24} color={Colors.textDark} />
+                                        </TouchableOpacity>
                                     </View>
-                                    </ScrollView>
-                                </KeyboardAvoidingView>
-                            </SafeAreaView>
-                        </Modal>
+                                    <Text style={styles.listInputText}>{link.link}</Text>
+                                </View>
+                            ))}
 
-                        {links.map((link, i) => (
-                            <View key={i} style={styles.linkList}>
-                                <View style={styles.editLinkContainer}>
-                                    <Text style={styles.listInputTextBold}>{link.linkDescription}</Text>
-                                    <TouchableOpacity onPress={() => {setEditLinkModalVisible(true); setSelectedLinkDescription(link.linkDescription); setSelectedLinkLink(link.link); setSelectedLinkId(link.linkId)}}>
-                                        <Feather name="edit" size={24} color="black" />
-                                    </TouchableOpacity>
-
-                                    <Modal
-                                        visible={editLinkModalVisible}
-                                    >
-                                         <SafeAreaView style={styles.container}> 
-                                            <KeyboardAvoidingView>
-                                            <ScrollView
-                                                style={styles.inputContainer}
-                                                contentContainerStyle={styles.inputContentContainer}
-                                                keyboardShouldPersistTaps='always'>
-                                                <View style={styles.modalContent}>
+                            <Modal
+                                visible={editLinkModalVisible}
+                                transparent={true}
+                            >
+                                <SafeAreaView style={styles.modalContainer}> 
+                                    <KeyboardAvoidingView style={styles.modalKAVContainer}>
+                                        <ScrollView
+                                            style={styles.modalInputContainer}
+                                            contentContainerStyle={styles.inputContentContainer}
+                                            keyboardShouldPersistTaps='always'
+                                        >
+                                            <View style={styles.modalContent}>
                                                 <View style={styles.inputModal}>
-                                                <Text style={styles.modalHeaderText}>Edit Link</Text>
-                                                    <View style={styles.input}>
+                                                    <Text style={styles.modalHeaderText}>Edit Link</Text>
+                                                    <View style={styles.modalInput}>
                                                         <Text style={styles.headerText}>{itemDescription}</Text>
                                                         <Text style={styles.headerText}>Link Description</Text>
                                                         <View style={styles.listInputView}>
@@ -295,9 +257,9 @@ const EditItem = ({ route }) => {
                                                                 autoCorrect={false} 
                                                             />
                                                             {selectedLinkDescription.length > 0 ? (
-                                                            <TouchableOpacity style={styles.clearTextButton} onPress={() => setSelectedLinkDescription('')}>
-                                                                <AntDesign name="close" size={16} color={Colors.primary} />
-                                                            </TouchableOpacity>
+                                                                <TouchableOpacity style={styles.clearTextButton} onPress={() => setSelectedLinkDescription('')}>
+                                                                    <AntDesign name="close" size={16} color={Colors.primary} />
+                                                                </TouchableOpacity>
                                                             ) : null }
                                                         </View>
                                                         <Text style={styles.headerText}>Link</Text>
@@ -313,58 +275,101 @@ const EditItem = ({ route }) => {
                                                                 autoCapitalize="none"
                                                             />
                                                             {selectedLinkLink.length > 0 ? (
-                                                            <TouchableOpacity style={styles.clearTextButton} onPress={() => setSelectedLinkLink('')}>
-                                                                <AntDesign name="close" size={16} color={Colors.primary} />
-                                                            </TouchableOpacity>
+                                                                <TouchableOpacity style={styles.clearTextButton} onPress={() => setSelectedLinkLink('')}>
+                                                                    <AntDesign name="close" size={16} color={Colors.primary} />
+                                                                </TouchableOpacity>
                                                             ) : null }
                                                         </View>
                                                         {linkError ? (
                                                             <Text style={styles.listInputText}>{linkError}</Text>    
                                                         ) : null }
-                                                        </View>
-                                                        <View style={styles.modalButtonContainer}>
-                                                            <TouchableOpacity style={styles.modalButton} onPress={editExistingLinkInArray}>
-                                                                <Text style={styles.modalButtonText}>Save Changes</Text>
-                                                            </TouchableOpacity>
-                                                            <TouchableOpacity onPress={() => {setEditLinkModalVisible(false); setSelectedLinkDescription(''); setSelectedLinkLink(''); setSelectedLinkId('')}} style={styles.modalButton}>
-                                                                <Text style={styles.modalButtonText}>Cancel</Text>
-                                                            </TouchableOpacity>
-                                                        </View>
-                                                    </View> 
-                                                
-                                                </View>
-                                                </ScrollView>
-                                            </KeyboardAvoidingView>
-                                        </SafeAreaView>                        
-                                    </Modal>
+                                                    </View>
 
-                                    <View style={styles.spacer}></View>
-                                    <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedLinkDescription(link.linkDescription); setSelectedLinkLink(link.link); setSelectedLinkId(link.linkId)}}>
-                                        <AntDesign name="delete" size={24} color="black" />
-                                    </TouchableOpacity>
-                                </View>
-                                <Modal
-                                    visible={modalVisible}
-                                    transparent={true}
-                                >
-                                    <View style={styles.modalContentContainer}>
-                                        <Text style={styles.text}>Delete Link</Text>
-                                        <Text style={styles.text}>{selectedLinkDescription}</Text>
-                                        <Text style={styles.text} numberOfLines={4} ellipsizeMode='tail'>{selectedLinkLink} ?</Text>
-                                        <View style={styles.modalButtonContainer}>
-                                            <TouchableOpacity style={styles.modalButton} onPress={deleteLinkFromArray}>
-                                                <Text style={styles.modalButtonText}>Delete</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity onPress={() => {setModalVisible(false)}} style={styles.modalButton}>
-                                                <Text style={styles.modalButtonText}>Cancel</Text>
-                                            </TouchableOpacity>
+                                                    <TouchableOpacity style={styles.deleteButton} onPress={deleteLinkFromArray}>
+                                                        <Text style={styles.deleteButtonText}>Delete this link</Text>
+                                                        <AntDesign name="delete" size={24} color={Colors.textDelete} />
+                                                    </TouchableOpacity>
+
+                                                <View style={styles.modalButtonContainer}>
+                                                    <TouchableOpacity style={styles.modalButton} onPress={editExistingLinkInArray}>
+                                                        <Text style={styles.modalButtonText}>Save Changes</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity onPress={() => {setEditLinkModalVisible(false); setSelectedLinkDescription(''); setSelectedLinkLink(''); setSelectedLinkId('')}} style={styles.modalButton}>
+                                                        <Text style={styles.modalButtonText}>Cancel</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View> 
+                                        
                                         </View>
-                                    </View>
-                                </Modal>
-                                <Text style={styles.listInputText} numberOfLines={2} ellipsizeMode='tail'>{link.link}</Text>
+                                    </ScrollView>
+                                    </KeyboardAvoidingView>
+                                </SafeAreaView>                        
+                            </Modal>
+
+
+
+                            {linkInputVisible ? (
+                                <View style={styles.linkInputView}>
+                                <Text style={styles.headerText}>Link Description</Text>
+                                <View style={styles.listInputView}>
+                                    <TextInput
+                                        style={styles.linkInput}
+                                        onChangeText={setLinkDescription}
+                                        value={linkDescription}
+                                        multiline={true}
+                                        textAlignVertical='center'
+                                        autoCorrect={false}
+                                    />
+                                    {linkDescription.length > 0 ? (
+                                        <TouchableOpacity style={styles.clearTextButton} onPress={() => setLinkDescription('')}>
+                                            <AntDesign name="close" size={16} color={Colors.primary} />
+                                        </TouchableOpacity>
+                                        ) : null
+                                    }    
+                                </View>       
+                                <Text style={styles.headerText}>Link</Text>
+                                <View style={styles.listInputView}>
+                                    <TextInput
+                                        style={styles.linkInput}
+                                        onChangeText={setLink}
+                                        value={link}
+                                        multiline={true}
+                                        textAlignVertical='center'
+                                        keyboardType='email-address'
+                                        autoCorrect={false}
+                                        autoCapitalize="none"
+                                    /> 
+                                    {link.length > 0 ? (
+                                        <TouchableOpacity style={styles.clearTextButton} onPress={() => setLink('')}>
+                                            <AntDesign name="close" size={16} color={Colors.primary} />
+                                        </TouchableOpacity>
+                                        ) : null
+                                    }    
+                                </View>
+                                    {linkError ? (
+                                        <Text style={styles.listInputText}>{linkError}</Text>    
+                                    ) : null }
+
+                                    <TouchableOpacity style={styles.saveLinkButton} disabled={buttonDisabled} onPress={saveNewLinkToArray}>
+                                        <Text style={styles.newListText}>Save Link</Text>
+                                    </TouchableOpacity>
+                        
                             </View>
-                        ))}
+                            ) : (
+                            <TouchableOpacity style={styles.addLinkButton} onPress={() => setLinkInputVisible(true)}>
+                                <Text style={styles.addLinkButtonText}>Add a link</Text>
+                                <Ionicons name="add-circle-outline" size={24} color={Colors.textDark} />
+                            </TouchableOpacity>
+                            )}
+                      
+                        </View>
                     </View>
+
+                    <TouchableOpacity style={styles.deleteButton} disabled={saveButtonDisabled} onPress={() => deleteItemFromChosenList(listId, itemId)}>
+                        <Text style={styles.deleteButtonText}>Delete this item</Text>
+                        <AntDesign name="delete" size={24} color={Colors.textDelete} />
+                    </TouchableOpacity>
+
                     <TouchableOpacity style={styles.newListButton} disabled={saveButtonDisabled} onPress={saveItemChanges}>
                         <Text style={styles.buttonText}>Save Changes</Text>
                     </TouchableOpacity>
@@ -378,33 +383,65 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.background,
-        color: Colors.textLight,
         justifyContent: 'flex-start',
-        alignItems: 'center'
+        alignItems: 'center',
+        position: 'relative'
+    },
+    header: {
+        height: 80,
+        width: '100%',
+        backgroundColor: Colors.primary,
+    },
+    KAVContainer: {
+        flex: 1,
+        alignItems: 'center',
+        position: 'absolute',
+        zIndex: 100,
+        marginTop: 45,
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0
     },
     inputContainer: {
         paddingLeft: 5,
-        width: '90%'
+        width: '100%'
     },
     inputContentContainer: {
         alignItems: 'center',
+        
     },
     input: {
         flex: 1
     },
     headerText: {
-        fontSize: 20,
-        color: Colors.primary,
+        fontSize: 18,
+        color: Colors.textDark,
         fontWeight: 'bold',
         textAlign: 'left',
         paddingBottom: 5,
         paddingTop: 20,
-        width: 300
+        paddingLeft: 20
+    },
+    inputDetails: {
+        width: 380,
+        backgroundColor: Colors.secondary,
+        paddingBottom: 20,
+        justifyContent: 'center',
+        marginBottom: 20,
+        //shadow and elevation props
+        shadowColor: '#2B2D2F',
+        shadowOffset: {width: 4, height: 4},
+        shadowOpacity: 0.9,
+        shadowRadius: 10,
+        elevation: 20,
+        shadowColor: '#A9A9A9',
     },
     linkHeaderContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-start'
+        justifyContent: 'flex-start',
+        marginTop: 10
     },
     headerTextLinks: {
         fontSize: 22,
@@ -421,28 +458,47 @@ const styles = StyleSheet.create({
     },
     listInput: {
         minHeight: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        borderRadius: 15,
-        width: 300,
+        // borderWidth: 2,
+        // borderColor: Colors.primary,
+        borderRadius: 5,
+        width: '90%',
+        marginLeft: 20,
         paddingLeft: 10,
-        paddingRight: 10,
+        // paddingRight: 10,
         fontSize: 18,
-        color: Colors.primary,
+        backgroundColor: Colors.background,
+        color: Colors.textDark,
         textAlign: 'left',
-        justifyContent: 'center'
+        justifyContent: 'center',
+    },
+    linkInput: {
+        minHeight: 50,
+        borderRadius: 5,
+        width: '90%',
+        paddingLeft: 10,
+        fontSize: 18,
+        backgroundColor: Colors.background,
+        color: Colors.textDark,
+        textAlign: 'left',
+        justifyContent: 'center',
+    },
+    listInputView: {
+        width: '90%',
+        paddingRight: 10,
+        marginLeft: 20,
+        backgroundColor: Colors.background,
+        flexDirection: 'row',
+        justifyContent: 'space-between'
     },
     newListButton:{
-        height: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        backgroundColor: Colors.primary,
-        borderRadius: 15,
+        height: 60,
+        backgroundColor: Colors.button,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 50,
-        width: 300,
-        marginTop: 10
+        width: 250,
+        marginTop: 50,
     },
     buttonText:{
         color: Colors.background,
@@ -450,10 +506,16 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
     listInputText: {
-        //paddingLeft: 20,
         fontSize: 18,
         color: Colors.primary,
-        textAlign: 'left'
+        textAlign: 'left',
+        marginRight: 20
+    },
+    linkErrorText: {
+        fontSize: 18,
+        color: Colors.primary,
+        textAlign: 'left',
+        paddingLeft: 20
     },
     listInputTextBold: {
         //paddingLeft: 20,
@@ -462,18 +524,19 @@ const styles = StyleSheet.create({
         textAlign: 'left',
         fontWeight: 'bold',
         paddingTop: 5,
-        width: '90%'
+        width: '87%'
     },
     saveLinkButton: {
-        height: 50,
+        height: 60,
         borderWidth: 2,
-        borderColor: Colors.primary,
-        backgroundColor: Colors.primary,
-        borderRadius: 15,
+        borderColor: Colors.button,
+        backgroundColor: Colors.button,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 50,
-        width: 300,
+        marginBottom: 20,
+        width: '60%',
+        marginLeft: '20%',
         marginTop: 20
     },
     buttonContainer: {
@@ -519,15 +582,14 @@ const styles = StyleSheet.create({
         marginTop: 60
     },
     modalButton:{
-        height: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        backgroundColor: Colors.primary,
-        borderRadius: 15,
+        height: 60,
+        backgroundColor: Colors.button,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 50,
-        width: 135
+        width: 135,
+        marginTop: 50,
     },
     modalButtonText:{
         color: Colors.background,
@@ -548,18 +610,6 @@ const styles = StyleSheet.create({
         paddingTop: 8,
         width: '5%'
     },
-    listInputView: {
-        minHeight: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        borderRadius: 15,
-        width: 300,
-        paddingLeft: 10,
-        paddingRight: 10,
-        marginTop: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-between'
-    },
     linkListInput: {
             minHeight: 50,
             width: '90%',
@@ -567,7 +617,8 @@ const styles = StyleSheet.create({
             // paddingRight: 10,
             fontSize: 18,
             color: Colors.primary,
-            textAlign: 'left'
+            textAlign: 'left',
+            backgroundColor: Colors.background
     },
     listItemText: {
         fontSize: 18,
@@ -600,6 +651,77 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: Colors.primary,
         textAlign: 'left'
+    },
+    addLinkButton:{
+        width: '90%',
+        height: 60,
+        backgroundColor: Colors.newLinkButton,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 20,
+        marginTop: 20
+    },
+    addLinkButtonText: {
+        color: Colors.textDark,
+        fontSize: 18,
+        fontWeight: 'bold',
+        paddingRight: 5
+    },
+    linkList: {
+        paddingLeft: '5%'
+    },
+    editButton: {
+        paddingRight: 50
+    },
+    newListText: {
+        color: Colors.background,
+        fontSize: 18,
+        fontWeight: 'bold'
+    },
+    deleteButton: {
+        width: '90%',
+        height: 60,
+        backgroundColor: Colors.deleteButton,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20
+    },
+    deleteButtonText: {
+        color: Colors.textDelete,
+        fontSize: 18,
+        fontWeight: 'bold',
+        paddingRight: 5
+    },
+    modalContainer: {
+       //backgroundColor: Colors.background,
+       backgroundColor: '#00000080',
+       flex: 1,
+       justifyContent: 'flex-start',
+       alignItems: 'center',
+       width: '100%'
+    },
+    modalKAVContainer: {
+        flex: 1
+    },
+    modalInputContainer: {
+        paddingLeft: 5,
+        width: 380,
+
+        borderRadius: 5,
+        backgroundColor: Colors.secondary,
+        //shadow and elevation props
+        shadowColor: '#2B2D2F',
+        shadowOffset: {width: 4, height: 4},
+        shadowOpacity: 0.9,
+        shadowRadius: 10,
+        elevation: 20,
+        shadowColor: '#A9A9A9',
+    },
+    modalInput: {
+        flex: 1,
+        marginBottom: 30
     }
 })
 

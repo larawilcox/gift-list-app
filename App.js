@@ -6,6 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator, HeaderBackButton } from '@react-navigation/stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
 import MyLists from './Screens/MyLists';
 import SubscribedLists from './Screens/SubscribedLists';
@@ -16,6 +17,7 @@ import AddItem from './Screens/AddItem';
 import EditList from './Screens/EditList';
 import EditItem from './Screens/EditItem';
 import SubscribedToList from './Screens/SubscribedToList';
+import ShoppingList from './Screens/ShoppingList';
 import ShareList from './Screens/ShareList';
 import Login from './Screens/Login';
 import ForgotPassword from './Screens/ForgotPassword';
@@ -26,36 +28,54 @@ import SignUp from './Screens/SignUp';
 import Colors from './Constants/Colors';
 
 import { AntDesign } from '@expo/vector-icons'; 
+import { Ionicons } from '@expo/vector-icons'; 
+
 
 const LoginStack = createStackNavigator();
 const MyAppTab = createBottomTabNavigator();
 const MyListStack = createStackNavigator();
 const SubscribedListsStack = createStackNavigator();
 const SettingsStack = createStackNavigator();
+const FriendsTab = createMaterialTopTabNavigator();
 
 function MyAppTabScreen() {
   const insets = useSafeAreaInsets();
   return (
   <MyAppTab.Navigator
           initialRouteName="My Lists"
+          screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused }) => {
+              let iconColor = Colors.textGrey;
+              if (route.name === 'My Lists') { 
+                iconColor = focused ? Colors.textDark : Colors.textGrey
+                return <Ionicons name="list" size={24} color={iconColor} />
+              } else if (route.name === 'Friends\' Lists') {
+                iconColor = focused ? Colors.textDark : Colors.textGrey
+                return <Ionicons name="people-outline" size={24} color={iconColor} />
+              } else if (route.name === 'Settings') {
+                iconColor = focused ? Colors.textDark : Colors.textGrey
+                return <Ionicons name="settings-outline" size={24} color={iconColor} />
+              }
+            },
+          })}
           tabBarOptions={{
-            activeBackgroundColor: Colors.primary,
-            inactiveBackgroundColor: Colors.background,
-            activeTintColor: Colors.textLight,
-            inactiveTintColor: Colors.primary,
+            activeBackgroundColor: Colors.secondary,
+            inactiveBackgroundColor: Colors.secondary,
+            activeTintColor: Colors.textDark,
+            inactiveTintColor: Colors.textGrey,
             labelStyle: {
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: 'bold',
               alignItems: 'center',
               justifyContent: 'center',
               paddingBottom: 13,
             },
             style:{
-              backgroundColor: Colors.background,
+              backgroundColor: Colors.secondary,
               paddingLeft: 25,
               paddingRight: 25,
               paddingTop: 15,
-              height: insets.bottom === 0 ? insets.bottom + 75 : insets.bottom + 60,
+              height: insets.bottom === 0 ? insets.bottom + 95 : insets.bottom + 75,
               paddingBottom: insets.bottom === 0 ? 15 + insets.bottom : insets.bottom
             },
             tabStyle: {
@@ -65,7 +85,7 @@ function MyAppTabScreen() {
 
       >
         <MyAppTab.Screen name="My Lists" component={MyListStackScreen} />
-        <MyAppTab.Screen name="Friends' Lists" component={SubscribedListsStackScreen} />
+        <MyAppTab.Screen name="Friends' Lists" component={FriendsTabScreen} />
         <MyAppTab.Screen name="Settings" component={SettingsStackScreen} />
       </MyAppTab.Navigator>
   )
@@ -77,12 +97,17 @@ function MyListStackScreen() {
       initialRouteName="My Lists" 
       screenOptions={{
         headerStyle: {
-          backgroundColor: Colors.background,
+          backgroundColor: Colors.primary,
+          elevation: 0, // remove shadow on Android
+          shadowOpacity: 0, // remove shadow on iOS
+          // height: 120,
         },
-        headerTintColor: Colors.primary,
+        headerTintColor: Colors.textLight,
         headerTitleStyle: {
           fontWeight: 'bold',
-          fontSize: 26
+          fontSize: 26,
+          paddingTop: 15,
+          
         }
       }}
     >
@@ -94,11 +119,11 @@ function MyListStackScreen() {
           component={ChosenList} 
           options={({ route, navigation }) => ({
               title: route.params.listName,
-              headerRight: () => (
-                <TouchableOpacity style={styles.closeButton} onPress={() => navigation.navigate('My Lists')}>
-                  <AntDesign name="close" size={24} color={Colors.primary} />
-                </TouchableOpacity>
-              ),
+              // headerRight: () => (
+              //   <TouchableOpacity style={styles.closeButton} onPress={() => navigation.navigate('Edit List', {oldListName: listName, oldListId: listId, oldListDate: listDate, data: data})}>
+              //     <FontAwesome name="edit" size={24} color={Colors.textLight} />
+              //   </TouchableOpacity>
+              // ),
               headerLeft: (props) => (
                 <HeaderBackButton
                   {...props}
@@ -113,7 +138,7 @@ function MyListStackScreen() {
           options={({ route, navigation }) => ({
             headerRight: () => (
               <TouchableOpacity style={styles.closeButton} onPress={() => navigation.popToTop()}>
-                <AntDesign name="close" size={24} color={Colors.primary} />
+                <AntDesign name="close" size={24} color={Colors.textLight} />
               </TouchableOpacity>
             )
             })} />
@@ -121,21 +146,16 @@ function MyListStackScreen() {
           name ="Add New Item" 
           component={AddItem}
           options={({ navigation }) => ({
+            title: "New item",
             headerRight: () => (
-              <TouchableOpacity style={styles.closeButton} onPress={() => navigation.reset({
-                index: 0,
-                routes: [{ name: "My Lists" }]
-              })}>
-                <AntDesign name="close" size={24} color={Colors.primary} />
+              <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
+                <AntDesign name="close" size={24} color={Colors.textLight} />
               </TouchableOpacity>
             ),
             headerLeft: (props) => (
               <HeaderBackButton
                 {...props}
-                onPress={() => navigation.reset({
-                  index: 0,
-                  routes: [{ name: "My Lists" }]
-                })}
+                onPress={() => navigation.goBack()}
               />
             ),
             headerBackTitle: 'Back'
@@ -146,7 +166,7 @@ function MyListStackScreen() {
             options={({ navigation }) => ({
               headerRight: () => (
                 <TouchableOpacity style={styles.closeButton} onPress={() => navigation.popToTop()}>
-                  <AntDesign name="close" size={24} color={Colors.primary} />
+                  <AntDesign name="close" size={24} color={Colors.textLight} />
                 </TouchableOpacity>
               ),
               headerLeft: (props) => (
@@ -163,7 +183,7 @@ function MyListStackScreen() {
             options={({ navigation }) => ({
               headerRight: () => (
                 <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-                  <AntDesign name="close" size={24} color={Colors.primary} />
+                  <AntDesign name="close" size={24} color={Colors.textLight} />
                 </TouchableOpacity>
               ),
               headerLeft: (props) => (
@@ -180,7 +200,7 @@ function MyListStackScreen() {
             options={({ navigation }) => ({
               headerRight: () => (
                 <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-                  <AntDesign name="close" size={24} color={Colors.primary} />
+                  <AntDesign name="close" size={24} color={Colors.textLight} />
                 </TouchableOpacity>
               ),
               headerLeft: (props) => (
@@ -194,7 +214,6 @@ function MyListStackScreen() {
     </MyListStack.Navigator>
   )
 }
-
 
 function SubscribedListsStackScreen() {
   return (
@@ -218,14 +237,20 @@ function SubscribedListsStackScreen() {
             options={({ route, navigation }) => ({
               title: route.params.listName,
               headerRight: () => (
-                <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-                  <AntDesign name="close" size={24} color={Colors.primary} />
+                <TouchableOpacity style={styles.closeButton} onPress={() => navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Subscribed Lists" }]
+                })}>
+                  <AntDesign name="close" size={24} color={Colors.textLight} />
                 </TouchableOpacity>
               ),
               headerLeft: (props) => (
                 <HeaderBackButton
                   {...props}
-                  onPress={() => navigation.goBack()}
+                  onPress={() => navigation.reset({
+                    index: 0,
+                    routes: [{ name: "Subscribed Lists" }]
+                  })}
                 />
               ),
               headerBackTitle: 'Back'
@@ -235,6 +260,42 @@ function SubscribedListsStackScreen() {
   )
 }
 
+function FriendsTabScreen() {
+  return (
+    <FriendsTab.Navigator
+      initialRouteName="Subscribed Lists"
+      screenOptions={{
+        tabBarActiveBackgroundColor: Colors.primary
+      }}
+      tabBarOptions={{
+        tabBarActiveBackgroundColor: Colors.primary,
+        inactiveBackgroundColor: Colors.background,
+        activeTintColor: Colors.primary,
+        inactiveTintColor: Colors.textLight,
+        labelStyle: {
+          fontSize: 16,
+          fontWeight: 'bold',
+          alignItems: 'center',
+          justifyContent: 'center',
+         
+        },
+        tabStyle: {
+          borderRadius: 15,
+          backgroundColor: Colors.background,
+          margin:10,
+        }
+      }}
+      style={{
+        marginTop: 50,
+        
+      }}
+      
+    >
+      <FriendsTab.Screen name="Subscribed Lists" component={SubscribedListsStackScreen} />
+      <FriendsTab.Screen name="Shopping List" component={ShoppingList} />
+    </FriendsTab.Navigator>
+  )
+}
 
 function SettingsStackScreen() {
   return (
@@ -264,9 +325,9 @@ export default function App() {
           initialRouteName="Login"
           headerMode='screen'
           screenOptions={{
-            backgroundColor: Colors.secondary,
+            backgroundColor: Colors.background,
             headerStyle: {
-              backgroundColor: Colors.background,
+              backgroundColor: Colors.primary,
               shadowColor: 'transparent'
             },
             headerShown: false
@@ -289,6 +350,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeButton: {
-    paddingRight: 10
+    paddingRight: 10,
   }
 });

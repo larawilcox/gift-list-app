@@ -23,11 +23,11 @@ const SubscribedLists = () => {
                 }
             });
 
-            console.log(mySubscribedLists)
+            //console.log(mySubscribedLists)
 
             const sectionListData = mySubscribedLists.data.map(section => {
                 return { title: section.forename, _id: section._id, email: section.email, data: section.lists.map(list => {
-                    return { list: list.listName, id: list._id }
+                    return { list: list.listName, id: list._id, data: list.listItems }
                 })}
             });
             setSectionListData(sectionListData);
@@ -42,28 +42,31 @@ const SubscribedLists = () => {
 
     const navigation = useNavigation();
 
-    const Item = ({ list, friend, data }) => {
+    const Item = ({ friend, data }) => {
+        //console.log('Data: ', data)
+        // console.log('List: ', list.id)
+        //console.log(friend)
+    
         return (
             <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('Subscribed To List', {
-                friendId: friend.id,
-                listName: list.list,
-                listId: list.id,
-                data: data
+                ownerId: friend._id,
+                listId: data._id,
+                ownerName: friend.title,
+                data: data, 
+                listName: data.list
             })}>
-                <Text style={styles.listNameText}>{list.list}</Text>
+                <Text style={styles.listNameText}>{data.list}</Text>
             </TouchableOpacity>
         )
     }
-
-
 
     return (
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView>
             <SectionList
                 sections={sectionListData}
-                //keyExtractor={}
-                renderItem={({ item, section }) => <Item list={item} friend={section} data={Data} />}
+                keyExtractor={(item, index) => item + index}
+                renderItem={({ item, section }) => <Item friend={section} data={item} />}
                 renderSectionHeader={({ section: { title } }) => (
                     <Text style={styles.headerText}>{title}'s Lists</Text>
                 )}

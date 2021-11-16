@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
         height: 60,
         width: '75%',
         backgroundColor: Colors.tabBarLight,
-        borderColor: Colors.secondary,
+        borderColor: Colors.primary,
         borderWidth: 4,
         borderRadius: 35,
         marginTop: 20
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     button: {
         width: '75%',
         height: 60,
-        backgroundColor: Colors.secondary,
+        backgroundColor: Colors.primary,
         borderColor: Colors.tabBarLight,
         borderWidth: 4,
         borderRadius: 35,
