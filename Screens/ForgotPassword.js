@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 
@@ -60,6 +60,7 @@ const ForgotPassword = ( { route }) => {
     return (
         <View style={styles.container}>
             <SafeAreaView style={styles.container}>
+            <StatusBar  barStyle="light-content" translucent={true} backgroundColor={Colors.primary} />
             <Text style={styles.textHeader}>Reset Password</Text>
             {errorMessage.length > 0 ? <Text style={styles.error}>{errorMessage}</Text> : null}
             <View style={styles.textInputContainer}>

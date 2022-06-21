@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Linking, Modal, KeyboardAvoidingView } from 'react-native';
+import { Text, View, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Linking, StatusBar, KeyboardAvoidingView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import Share from 'react-native-share';
+import { customAlphabet } from 'nanoid/non-secure';
 
 import Colors from '../Constants/Colors';
 import { BASE_URL } from '../Constants/Api';
@@ -83,9 +85,9 @@ const ChosenList = ({ route }) => {
     const navigation = useNavigation();
     
     const { listId, listName, listDate } = route.params;
-    const [myCurrentList, setMyCurrentList] = useState({})
+    const [myCurrentList, setMyCurrentList] = useState({});
     const [toggleDetail, setToggleDetail] = useState();
-    console.log(myCurrentList)
+    const [myName, setMyName] = useState();
 
     React.useLayoutEffect(() => {
         navigation.setOptions({
@@ -99,7 +101,6 @@ const ChosenList = ({ route }) => {
 
     const fetchData = async () => {
         try {
-            console.log('Chosen list :', listId)
             const token = await SecureStore.getItemAsync('token')
             const myList = await axios.get(`${BASE_URL}/lists/${listId}`, {
                 headers: {
@@ -115,23 +116,63 @@ const ChosenList = ({ route }) => {
     useEffect(() => {
         void fetchData();
     }, [listId]);
+
+    const fetchMyName = async () => {
+        try {
+            const token = await SecureStore.getItemAsync('token');
+            const myName = await axios.get(`${BASE_URL}/users/me`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setMyName(myName.data.forename);
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    useEffect(() => {
+        void fetchMyName();
+    }, []);
     
 
-    //console.log(Object.keys(myCurrentList))
+    const openShare = async () => {
+        try {
+            const token = await SecureStore.getItemAsync('token')
+            const nanoid = customAlphabet('1234567890abcdef', 10);
+            const code = nanoid();
+            const myCode = await axios.post(`${BASE_URL}/shareCodes`, {
+                listId,
+                shareCode: code
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            console.log('data:', myCurrentList)
+            const shareResponse = await Share.open({message: `To see ${myName}'s gift list, please enter code ${code} into your app.`});
+        } catch(e) {
+            console.log(e)
+        }
+      };
 
         if (Object.keys(myCurrentList).length > 0) {
             return ( 
                 <SafeAreaView style={styles.container}>
+                    <StatusBar  barStyle="light-content" translucent={true} backgroundColor={Colors.primary} />
                     <KeyboardAvoidingView style={styles.KAVContainer}>
                         <View style={styles.header}></View>
-                        <TouchableOpacity style={styles.shareListButton} onPress={() => {}}>
+                        <View style={styles.header2}></View>
+                        <TouchableOpacity style={styles.shareListButton} onPress={openShare}>
                             <Text style={styles.shareListButtonText}>Share this list</Text>
                             <Feather name="share" size={24} color={Colors.textLight} />
                         </TouchableOpacity>
+    
                             { (myCurrentList.listItems.length > 0) ? (
                                 <FlatList 
                                     data={myCurrentList.listItems}
                                     showsVerticalScrollIndicator={false}
+                                    contentContainerStyle={{ paddingBottom: 60 }}
                                     renderItem={({ item }) => (
                                         <Item 
                                             listId={listId}
@@ -153,6 +194,7 @@ const ChosenList = ({ route }) => {
                                     </View>
                                 )
                             }
+                           
                         
                         <TouchableOpacity style={styles.addItemButton} onPress={() => navigation.navigate('Add New Item', {
                                 listId: listId,
@@ -207,26 +249,16 @@ const styles = StyleSheet.create({
         elevation: 20,
         shadowColor: '#A9A9A9',
     },
-    // listItem: {
-    //     minHeight: 50,
-    //     borderWidth: 2,
-    //     borderColor: Colors.primary,
-    //     borderRadius: 15,
-    //     flexDirection: 'row',
-    //     justifyContent: 'flex-start',
-    //     alignItems: 'flex-start',
-    //     marginBottom: 10,
-    //     marginLeft: 8,
-    //     width: '95%',
-    //     paddingRight: 10,
-    //     paddingBottom: 10,
-    //     paddingTop: 10,
-        
-    // },
     header: {
         height: 80,
         width: '100%',
         backgroundColor: Colors.primary,
+        color: 'black'
+    },
+    header2: {
+        height: 50,
+        width: '100%',
+        backgroundColor: Colors.background,
         color: 'black'
     },
     shareListButton: {
@@ -238,7 +270,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         position: 'absolute',
-        zIndex: 100,
+        zIndex: 101,
         marginTop: 45,
         marginBottom: 10
     },
@@ -257,8 +289,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
     list: {
-        paddingTop: 60,
-        paddingBottom: 100,
+        width: '100%',
+        paddingTop: 10,
+        paddingBottom: 200,
         top: 0,
         bottom: 0,
         left: 0,
@@ -270,7 +303,7 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: 20,
         marginTop: 20,
         width: 250
     },
@@ -389,7 +422,11 @@ const styles = StyleSheet.create({
     },
     editListButton:{
         paddingRight: 15
-    }
+    },
+    listView:{
+        flex: 1
+
+    },
 })
 
 export default ChosenList;

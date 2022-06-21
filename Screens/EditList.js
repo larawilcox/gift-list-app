@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, TextInput, SafeAreaView, TouchableOpacity, KeyboardAvoidingView } from 'react-native';
+import { Text, View, StyleSheet, TextInput, SafeAreaView, TouchableOpacity, ScrollView, KeyboardAvoidingView, StatusBar, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import DatePicker from 'react-native-date-picker';
 import 'react-native-get-random-values';
@@ -20,6 +20,7 @@ const EditList = ({ route }) => {
     const [date, setDate] = useState(new Date(oldListDate));
     const [buttonDisabled, setButtonDisabled] = useState(true);
     
+    const { height, width } = useWindowDimensions();
 
     useEffect(() => {
         if (listName.length > 0) {
@@ -44,7 +45,10 @@ const EditList = ({ route }) => {
                 }
             })
 
-            navigation.navigate('My Lists');
+            navigation.reset({
+                index: 0,
+                routes: [{ name: "My Lists" }]
+              })
         } catch (e) {
             console.log(e)
         }
@@ -60,8 +64,7 @@ const EditList = ({ route }) => {
                 headers: {
                     Authorization: `Bearer ${token} `
                 }
-            })
-            await fetchData()
+            })  
         } catch (e) {
             console.log(e)
         }
@@ -76,34 +79,41 @@ const EditList = ({ route }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}></View>
+            <StatusBar  barStyle="light-content" translucent={true} backgroundColor={Colors.primary} />
             <KeyboardAvoidingView style={styles.KAVContainer}>
-                <View style={styles.input}>
-                    <Text style={styles.headerText}>List Name:</Text>
-                    <TextInput
-                        style={styles.listInput}
-                        onChangeText={setListName}
-                        value={listName}
-                        autofocus={true}
-                        autoCorrect={false}
-                        // onSubmitEditing={move focus to date input}
-                    />
-                    <Text style={styles.headerText}>Date of Occasion:</Text>
-                    <DatePicker
-                        style={styles.datePicker}
-                        mode='date'
-                        date={date}
-                        onDateChange={setDate}
-                        textColor={Colors.primary}
-                    />
-                </View>
-                <TouchableOpacity style={styles.deleteButton} onPress={deleteListFromMyLists}>
-                        <Text style={styles.deleteButtonText}>Delete this list</Text>
-                        <AntDesign name="delete" size={24} color={Colors.textDelete} />
+                <View style={styles.header}></View>
+                <ScrollView
+                        style={styles.inputContainer}
+                        contentContainerStyle={styles.inputContentContainer}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps='always'>
+                    <View style={styles.input}>
+                        <Text style={styles.headerText}>List Name</Text>
+                        <TextInput
+                            style={styles.listInput}
+                            onChangeText={setListName}
+                            value={listName}
+                            autofocus={true}
+                            autoCorrect={false}
+                            // onSubmitEditing={move focus to date input}
+                        />
+                        <Text style={styles.headerText}>Date of Occasion</Text>
+                        <DatePicker
+                            style={{ width: width*0.9, paddingLeft: 20 }}
+                            mode='date'
+                            date={date}
+                            onDateChange={setDate}
+                            textColor={Colors.primary}
+                        />
+                    </View>
+                    <TouchableOpacity style={styles.deleteButton} onPress={deleteListFromMyLists}>
+                            <Text style={styles.deleteButtonText}>Delete this list</Text>
+                            <AntDesign name="delete" size={24} color={Colors.textDelete} />
+                        </TouchableOpacity>
+                    <TouchableOpacity style={styles.newListButton} disabled={buttonDisabled} onPress={EditList}>
+                        <Text style={styles.newListText}>Save Changes</Text>
                     </TouchableOpacity>
-                <TouchableOpacity style={styles.newListButton} disabled={buttonDisabled} onPress={EditList}>
-                    <Text style={styles.newListText}>Save Changes</Text>
-                </TouchableOpacity>
+                </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     )
@@ -116,21 +126,42 @@ const styles = StyleSheet.create({
         color: Colors.textLight,
         justifyContent: 'flex-start',
         alignItems: 'center',
-        position: 'relative'
-        // paddingTop: 50
+        width: '100%'
     },
     KAVContainer: {
         flex: 1,
+        position: 'relative',
         alignItems: 'center',
+        width: '100%'
+    },
+    header: {
+        height: 80,
+        width: '100%',
+        backgroundColor: Colors.primary,
+        color: 'black'
+    },
+    inputContainer: {
+        width: '100%',
         position: 'absolute',
         zIndex: 100,
-        marginTop: 45
+        marginTop: 45,
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0
+    },
+    inputContentContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        paddingBottom: 200
     },
     input: {
-        width: 380,
+        width: '90%',
         backgroundColor: Colors.secondary,
         paddingBottom: 20,
         justifyContent: 'center',
+        marginBottom: 20,
         //shadow and elevation props
         shadowColor: '#2B2D2F',
         shadowOffset: {width: 4, height: 4},
@@ -138,15 +169,14 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         elevation: 20,
         shadowColor: '#A9A9A9',
-        flex: 1
     },
     headerText: {
         fontSize: 18,
-        color: Colors.primary,
+        color: Colors.textDark,
         fontWeight: 'bold',
         textAlign: 'left',
-        paddingBottom: 10,
-        paddingTop: 40,
+        paddingBottom: 5,
+        paddingTop: 20,
         paddingLeft: 20
     },
     listInput: {
@@ -175,16 +205,6 @@ const styles = StyleSheet.create({
         color: Colors.background,
         fontSize: 18,
         fontWeight: 'bold'
-    },
-    datePicker: {
-        width: 380,
-        paddingLeft: 20,
-    },
-    header: {
-        height: 80,
-        width: '100%',
-        backgroundColor: Colors.primary,
-        color: 'black'
     },
     deleteButton: {
         width: '90%',

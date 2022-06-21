@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Modal, KeyboardAvoidingView } from 'react-native';
+import { Text, View, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Modal, KeyboardAvoidingView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
  
-import { Feather } from '@expo/vector-icons'; 
-import { AntDesign } from '@expo/vector-icons'; 
 import { Octicons } from '@expo/vector-icons';
 
 import Colors from '../Constants/Colors';
@@ -51,7 +49,6 @@ const MyLists = () => {
     const Item = ({ listName, listId, listDate, data }) => {
         const navigation = useNavigation();
         
-        //console.log('My Lists', dataItems);
         return (
         <TouchableOpacity onPress={()=> {
             navigation.navigate('Chosen List', {
@@ -62,17 +59,7 @@ const MyLists = () => {
                 <Text style={styles.listNameText}>{listName}</Text>
                 <Octicons name="chevron-right" size={24} color={Colors.textDark} />
                 
-            {/* <TouchableOpacity onPress={() => navigation.navigate('Share List', {listId: listId, data: data})}>
-                <Feather name="share" size={24} color="black" />
-            </TouchableOpacity>
-            <View style={styles.spacer}></View>
-            <TouchableOpacity onPress={() => navigation.navigate('Edit List', {oldListName: listName, oldListId: listId, oldListDate: listDate, data: data})}>
-                <Feather name="edit" size={24} color="black" />
-            </TouchableOpacity>
-            <View style={styles.spacer}></View>
-            <TouchableOpacity onPress={() => {setModalVisible(true); setSelectedList(listName); setSelectedListId(listId)}}>
-                <AntDesign name="delete" size={24} color="black" />
-            </TouchableOpacity> */}
+        
         </TouchableOpacity>
     )};
 
@@ -80,6 +67,7 @@ const MyLists = () => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <StatusBar  barStyle="light-content" translucent={true} backgroundColor={Colors.primary} />
             <KeyboardAvoidingView style={styles.KAVContainer}>
                 <View style={styles.header}></View>
                 <View style={styles.listView}>
@@ -89,24 +77,8 @@ const MyLists = () => {
                             <Item listName={item.listName} listId={item._id} listDate={item.occasionDate} data={listData} />)}
                         keyExtractor={item => item._id}
                         style={styles.list}
+                        showsVerticalScrollIndicator={false}
                     />
-                    {/* <Modal
-                        visible={modalVisible}
-                        transparent={true}
-                    >
-                            <View style={styles.contentContainer}>
-                                <Text style={styles.text}>Delete List</Text>
-                                <Text style={styles.text}>{selectedList} ?</Text>
-                                <View style={styles.buttonContainer}>
-                                    <TouchableOpacity style={styles.button} onPress={deleteListFromMyLists}>
-                                        <Text style={styles.buttonText}>Delete</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => {setModalVisible(false)}} style={styles.button}>
-                                        <Text style={styles.buttonText}>Cancel</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                    </Modal> */}
                     <TouchableOpacity style={styles.newListButton} onPress={() => navigation.navigate('Add New List', {data: dataItems})}>
                         <Text style={styles.newListText}>Add a new list</Text>
                     </TouchableOpacity>
@@ -147,6 +119,8 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         marginLeft: 9,
         width: '95%',
+        paddingTop: 10,
+        paddingBottom: 10,
         paddingRight: 12,
         backgroundColor: Colors.secondary,
         //shadow and elevation props
@@ -184,7 +158,8 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 50,
+        marginTop: 20,
+        marginBottom: 20,
         width: 250
     },
     newListText:{

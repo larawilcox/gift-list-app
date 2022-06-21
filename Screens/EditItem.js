@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, TextInput, SafeAreaView, TouchableOpacity, KeyboardAvoidingView, ScrollView, Modal } from 'react-native';
+import { Text, View, StyleSheet, TextInput, SafeAreaView, TouchableOpacity, KeyboardAvoidingView, ScrollView, Modal, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import isURL from 'validator/lib/isURL';
 import 'react-native-get-random-values';
@@ -43,6 +43,8 @@ const EditItem = ({ route }) => {
     const [selectedLinkLink, setSelectedLinkLink] = useState('');
     const [selectedLinkId, setSelectedLinkId] = useState('');
     const [linkInputVisible, setLinkInputVisible] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState('');
+    const [inputError, setInputError] = useState('');
 
     const priceValueOptions = [
         { label: 'Unspecified', value: '0' },
@@ -74,13 +76,17 @@ const EditItem = ({ route }) => {
         }
     }, [itemDescription]);
 
+    useEffect(() => {
+        if (!!itemPrice) {
+            setInputError('')
+        }
+    }, [itemPrice])
+
     const saveNewLinkToArray = e => {
         if (isURL(link)) {
-            newLinkId = uuidv4();
             setLinks([
                 ...links,
                 {
-                    linkId: newLinkId,
                     linkDescription: linkDescription,
                     link: link
                 }
@@ -95,7 +101,7 @@ const EditItem = ({ route }) => {
 
 
     const deleteLinkFromArray = () => {
-        const linkToDeleteIndex = links.findIndex(link => link.linkId === selectedLinkId);
+        const linkToDeleteIndex = links.findIndex(link => link._id === selectedLinkId);
 
         links.splice(linkToDeleteIndex, 1);
 
@@ -105,17 +111,14 @@ const EditItem = ({ route }) => {
 
     const editExistingLinkInArray = () => {
         if (isURL(selectedLinkLink)) {
-            const linkToUpdateIndex = links.findIndex(link => link.linkId === selectedLinkId)
+            const linkToUpdateIndex = links.findIndex(link => link._id === selectedLinkId)
 
             if (linkToUpdateIndex >= 0) {
                 links[linkToUpdateIndex].linkDescription = selectedLinkDescription;
                 links[linkToUpdateIndex].link = selectedLinkLink;
 
                 setEditLinkModalVisible(false);
-                console.log(links)
-            } else {
-                //maybe add new link to links array
-            }
+            } 
         } else {
             setLinkError('This is not a valid URL')
         }
@@ -123,9 +126,8 @@ const EditItem = ({ route }) => {
 
 
     const saveItemChanges = async () => {
-
+        if (itemDescription.length > 0 && itemPrice && itemPrice.length > 0) {
         try {
-            console.log('ItemId:', itemId)
             const token = await SecureStore.getItemAsync('token')
             const editItem = await axios.patch(`${BASE_URL}/lists/${listId}/listItem/${itemId}`, {
                 item: itemDescription,
@@ -150,9 +152,13 @@ const EditItem = ({ route }) => {
         } catch (e) {
             console.log(e)
         }
+    } else {
+        setInputError('Please complete all required fields, marked with a *.')
+    }
     }
 
     const deleteItemFromChosenList = async (listId, itemId) => {
+        if (currentItem.actions.action === '') {
         try {
             const token = await SecureStore.getItemAsync('token')
             const deletedItem = await axios.delete(`${BASE_URL}/lists/${listId}/listItem/${itemId}`, {
@@ -170,6 +176,8 @@ const EditItem = ({ route }) => {
               })
         } catch (e) {
             console.log(e)
+        }} else {
+            setDeleteMessage('Cannot be deleted. This item has been reserved.')
         }
     }
 
@@ -178,15 +186,19 @@ const EditItem = ({ route }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}></View>
+            <StatusBar  barStyle="light-content" translucent={true} backgroundColor={Colors.primary} />
             <KeyboardAvoidingView style={styles.KAVContainer}>
+                <View style={styles.header}></View>
                 <ScrollView
                     style={styles.inputContainer}
                     contentContainerStyle={styles.inputContentContainer}
                     keyboardShouldPersistTaps='always'>
                     <View style={styles.input}>
                         <View style={styles.inputDetails}>
-                            <Text style={styles.headerText}>Item Description</Text>
+                            <View style={styles.descriptionLineAsterisk}>
+                                <Text style={styles.headerText}>Item Description</Text>
+                                <Text style={styles.asterisk}>*</Text>
+                            </View>
                                 <TextInput
                                     style={styles.listInput}
                                     onChangeText={setItemDescription}
@@ -204,13 +216,17 @@ const EditItem = ({ route }) => {
                                 textAlignVertical='center'
                                 autoCorrect={false}
                             />
-                            <Text style={styles.headerText}>Price Range</Text>
+                            <View style={styles.descriptionLineAsterisk}>
+                                <Text style={styles.headerText}>Price Range</Text>
+                                <Text style={styles.asterisk}>*</Text>
+                            </View>
                             <View style={styles.listInput}>
                                 <RNPickerSelect
                                     onValueChange={setItemPrice}
                                     items={priceValueOptions}
                                     textInputProps={styles.priceInput}
                                     value={itemPrice}
+                                    style={{ inputAndroid: { color: Colors.textDark } }}
                                 />
                             </View>
                         </View>
@@ -222,7 +238,7 @@ const EditItem = ({ route }) => {
                                 <View key={i} style={styles.linkList}>
                                     <View style={styles.linkHeaderContainer}>
                                         <Text style={styles.listInputTextBold}>{link.linkDescription}</Text>
-                                        <TouchableOpacity style={styles.editButton} onPress={() => {setEditLinkModalVisible(true); setSelectedLinkDescription(link.linkDescription); setSelectedLinkLink(link.link); setSelectedLinkId(link.linkId)}}>
+                                        <TouchableOpacity style={styles.editButton} onPress={() => {setEditLinkModalVisible(true); setSelectedLinkDescription(link.linkDescription); setSelectedLinkLink(link.link); setSelectedLinkId(link._id)}}>
                                             <FontAwesome name="edit" size={24} color={Colors.textDark} />
                                         </TouchableOpacity>
                                     </View>
@@ -238,7 +254,7 @@ const EditItem = ({ route }) => {
                                     <KeyboardAvoidingView style={styles.modalKAVContainer}>
                                         <ScrollView
                                             style={styles.modalInputContainer}
-                                            contentContainerStyle={styles.inputContentContainer}
+                                            contentContainerStyle={styles.inputModalContentContainer}
                                             keyboardShouldPersistTaps='always'
                                         >
                                             <View style={styles.modalContent}>
@@ -365,15 +381,19 @@ const EditItem = ({ route }) => {
                         </View>
                     </View>
 
-                    <TouchableOpacity style={styles.deleteButton} disabled={saveButtonDisabled} onPress={() => deleteItemFromChosenList(listId, itemId)}>
+                    <TouchableOpacity style={styles.deleteButton} disabled={saveButtonDisabled} onPress={() => deleteItemFromChosenList(listId, itemId, currentItem)}>
                         <Text style={styles.deleteButtonText}>Delete this item</Text>
                         <AntDesign name="delete" size={24} color={Colors.textDelete} />
                     </TouchableOpacity>
-
+                    {deleteMessage ? <Text style={styles.deleteButtonText}>{deleteMessage}</Text> : null}
+                    
+                    {inputError ? <Text style={styles.errorText}>{inputError}</Text> : null}
+                </ScrollView>
+                <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.newListButton} disabled={saveButtonDisabled} onPress={saveItemChanges}>
                         <Text style={styles.buttonText}>Save Changes</Text>
-                    </TouchableOpacity>
-                </ScrollView>
+                    </TouchableOpacity> 
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     )
@@ -383,18 +403,25 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.background,
+        color: Colors.textLight,
         justifyContent: 'flex-start',
         alignItems: 'center',
-        position: 'relative'
+        width: '100%'
+    },
+    KAVContainer: {
+        flex: 1,
+        position: 'relative',
+        alignItems: 'center',
+        width: '100%'
     },
     header: {
         height: 80,
         width: '100%',
         backgroundColor: Colors.primary,
+        color: 'black'
     },
-    KAVContainer: {
-        flex: 1,
-        alignItems: 'center',
+    inputContainer: {
+        width: '100%',
         position: 'absolute',
         zIndex: 100,
         marginTop: 45,
@@ -403,28 +430,27 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0
     },
-    inputContainer: {
-        paddingLeft: 5,
-        width: '100%'
-    },
     inputContentContainer: {
         alignItems: 'center',
-        
+        justifyContent: 'center',
+        width: '100%',
+        paddingBottom: 200
+    },
+    inputModalContentContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        paddingBottom: 250,
+        //height: 500
     },
     input: {
-        flex: 1
-    },
-    headerText: {
-        fontSize: 18,
-        color: Colors.textDark,
-        fontWeight: 'bold',
-        textAlign: 'left',
-        paddingBottom: 5,
-        paddingTop: 20,
-        paddingLeft: 20
+        flex: 1,
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     inputDetails: {
-        width: 380,
+        width: '90%',
         backgroundColor: Colors.secondary,
         paddingBottom: 20,
         justifyContent: 'center',
@@ -437,11 +463,83 @@ const styles = StyleSheet.create({
         elevation: 20,
         shadowColor: '#A9A9A9',
     },
+    descriptionLineAsterisk: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start'
+    },
+    headerText: {
+        fontSize: 18,
+        color: Colors.textDark,
+        fontWeight: 'bold',
+        textAlign: 'left',
+        paddingBottom: 5,
+        paddingTop: 20,
+        paddingLeft: 20
+    },
+    asterisk: {
+        color: Colors.textDelete,
+        paddingTop: 20,
+        paddingLeft: 5
+    },
+    listInput: {
+        minHeight: 50,
+        borderRadius: 5,
+        width: '90%',
+        marginLeft: 20,
+        paddingLeft: 10,
+        fontSize: 18,
+        backgroundColor: Colors.background,
+        color: Colors.textDark,
+        textAlign: 'left',
+        justifyContent: 'center'
+    },
+    priceInput: {
+        paddingLeft: 10,
+        paddingRight: 10,
+        fontSize: 18,
+        color: Colors.primary,
+        textAlign: 'left'
+    },
+    linkList: {
+        paddingBottom: 20
+    },
     linkHeaderContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'flex-start',
         marginTop: 10
+    },
+    listInputTextBold: {
+        //paddingLeft: 20,
+        fontSize: 18,
+        color: Colors.primary,
+        textAlign: 'left',
+        fontWeight: 'bold',
+        paddingTop: 5,
+        width: '87%'
+    },
+    editButton: {
+        paddingRight: 50
+    },
+    listInputText: {
+        fontSize: 18,
+        color: Colors.primary,
+        textAlign: 'left',
+        marginRight: 20
+    },
+    modalContainer: {
+        backgroundColor: '#00000080',
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        height: '100%'
+     },
+     modalKAVContainer: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+        alignItems: 'center'
     },
     headerTextLinks: {
         fontSize: 22,
@@ -455,21 +553,6 @@ const styles = StyleSheet.create({
     addLinkIcon: {
         fontWeight: 'bold',
         paddingTop: 5
-    },
-    listInput: {
-        minHeight: 50,
-        // borderWidth: 2,
-        // borderColor: Colors.primary,
-        borderRadius: 5,
-        width: '90%',
-        marginLeft: 20,
-        paddingLeft: 10,
-        // paddingRight: 10,
-        fontSize: 18,
-        backgroundColor: Colors.background,
-        color: Colors.textDark,
-        textAlign: 'left',
-        justifyContent: 'center',
     },
     linkInput: {
         minHeight: 50,
@@ -496,35 +579,20 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 50,
+        marginBottom: 10,
         width: 250,
-        marginTop: 50,
+        marginTop: 20,
     },
     buttonText:{
         color: Colors.background,
         fontSize: 18,
         fontWeight: 'bold'
     },
-    listInputText: {
-        fontSize: 18,
-        color: Colors.primary,
-        textAlign: 'left',
-        marginRight: 20
-    },
     linkErrorText: {
         fontSize: 18,
         color: Colors.primary,
         textAlign: 'left',
         paddingLeft: 20
-    },
-    listInputTextBold: {
-        //paddingLeft: 20,
-        fontSize: 18,
-        color: Colors.primary,
-        textAlign: 'left',
-        fontWeight: 'bold',
-        paddingTop: 5,
-        width: '87%'
     },
     saveLinkButton: {
         height: 60,
@@ -551,20 +619,6 @@ const styles = StyleSheet.create({
     },
     spacer: {
         width: 10
-    },
-    linkList: {
-        paddingBottom: 20
-    },
-    modalContentContainer: {
-        width: '94%',
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        borderRadius: 15,
-        paddingTop: 30,
-        alignItems: 'center',
-        backgroundColor: Colors.background,
-        marginTop: 120,
-        marginLeft: '3%'
     },
     text: {
         fontSize: 22,
@@ -671,9 +725,6 @@ const styles = StyleSheet.create({
     linkList: {
         paddingLeft: '5%'
     },
-    editButton: {
-        paddingRight: 50
-    },
     newListText: {
         color: Colors.background,
         fontSize: 18,
@@ -694,21 +745,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         paddingRight: 5
     },
-    modalContainer: {
-       //backgroundColor: Colors.background,
-       backgroundColor: '#00000080',
-       flex: 1,
-       justifyContent: 'flex-start',
-       alignItems: 'center',
-       width: '100%'
-    },
-    modalKAVContainer: {
-        flex: 1
-    },
     modalInputContainer: {
         paddingLeft: 5,
-        width: 380,
-
+        width: '95%',
         borderRadius: 5,
         backgroundColor: Colors.secondary,
         //shadow and elevation props
@@ -722,6 +761,19 @@ const styles = StyleSheet.create({
     modalInput: {
         flex: 1,
         marginBottom: 30
+    },
+    errorText: {
+        color: Colors.textDelete
+    },
+    buttonContainer: {
+        width: '100%',
+        backgroundColor: Colors.background,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 0,
+        zIndex: 101,
     }
 })
 

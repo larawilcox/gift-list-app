@@ -1,7 +1,6 @@
 import 'react-native-gesture-handler';
-import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator, HeaderBackButton } from '@react-navigation/stack';
@@ -56,8 +55,9 @@ function MyAppTabScreen() {
                 iconColor = focused ? Colors.textDark : Colors.textGrey
                 return <Ionicons name="settings-outline" size={24} color={iconColor} />
               }
-            },
-          })}
+            }
+          })
+        }
           tabBarOptions={{
             activeBackgroundColor: Colors.secondary,
             inactiveBackgroundColor: Colors.secondary,
@@ -91,23 +91,33 @@ function MyAppTabScreen() {
   )
 }
 
+function CustomHeader(props) {
+  return (
+    <View style={styles.customHeaderView}>
+      <Text style={styles.customHeaderTextTitle}>My Lists</Text>
+      <Text style={styles.customHeaderViewList} ellipsizeMode='tail' numberOfLines={1}>{props.listName}</Text>
+    </View>
+  )
+} 
+
 function MyListStackScreen() {
   return (
     <MyListStack.Navigator
-      initialRouteName="My Lists" 
+      initialRouteName="My Lists"
       screenOptions={{
         headerStyle: {
           backgroundColor: Colors.primary,
           elevation: 0, // remove shadow on Android
           shadowOpacity: 0, // remove shadow on iOS
           // height: 120,
+          
         },
         headerTintColor: Colors.textLight,
         headerTitleStyle: {
           fontWeight: 'bold',
           fontSize: 26,
           paddingTop: 15,
-          
+          alignItems: 'center'
         }
       }}
     >
@@ -116,9 +126,10 @@ function MyListStackScreen() {
           component={MyLists} />
       <MyListStack.Screen 
           name="Chosen List" 
-          component={ChosenList} 
+          component={ChosenList}
           options={({ route, navigation }) => ({
               title: route.params.listName,
+              headerTitle: (props) => <CustomHeader {...props} listName={route.params.listName} />,
               // headerRight: () => (
               //   <TouchableOpacity style={styles.closeButton} onPress={() => navigation.navigate('Edit List', {oldListName: listName, oldListId: listId, oldListDate: listDate, data: data})}>
               //     <FontAwesome name="edit" size={24} color={Colors.textLight} />
@@ -215,15 +226,26 @@ function MyListStackScreen() {
   )
 }
 
+function CustomHeaderSubscribed(props) {
+  return (
+    <View style={styles.customHeaderView}>
+      <Text style={styles.customHeaderTextTitle}>{props.listOwner}'s Lists</Text>
+      <Text style={styles.customHeaderViewList} ellipsizeMode='tail' numberOfLines={1}>{props.listName}</Text>
+    </View>
+  )
+} 
+
 function SubscribedListsStackScreen() {
   return (
     <SubscribedListsStack.Navigator
       initialRouteName="Subscribed Lists" 
       screenOptions={{
         headerStyle: {
-          backgroundColor: Colors.background,
+          backgroundColor: Colors.primary,
+          elevation: 0, // remove shadow on Android
+          shadowOpacity: 0, // remove shadow on iOS
         },
-        headerTintColor: Colors.primary,
+        headerTintColor: Colors.textLight,
         headerTitleStyle: {
           fontWeight: 'bold',
           fontSize: 26
@@ -235,7 +257,7 @@ function SubscribedListsStackScreen() {
             name="Subscribed To List" 
             component={SubscribedToList} 
             options={({ route, navigation }) => ({
-              title: route.params.listName,
+              headerTitle: (props) => <CustomHeaderSubscribed {...props} listOwner={route.params.ownerName} listName={route.params.listName} />,
               headerRight: () => (
                 <TouchableOpacity style={styles.closeButton} onPress={() => navigation.reset({
                   index: 0,
@@ -262,38 +284,41 @@ function SubscribedListsStackScreen() {
 
 function FriendsTabScreen() {
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.primary }}>
     <FriendsTab.Navigator
       initialRouteName="Subscribed Lists"
       screenOptions={{
-        tabBarActiveBackgroundColor: Colors.primary
+        tabBarActiveBackgroundColor: Colors.primary,
+        tabBarItemStyle: {
+          backgroundColor: Colors.primary
+        }
       }}
       tabBarOptions={{
-        tabBarActiveBackgroundColor: Colors.primary,
-        inactiveBackgroundColor: Colors.background,
         activeTintColor: Colors.primary,
-        inactiveTintColor: Colors.textLight,
+        inactiveTintColor: Colors.textGrey,
         labelStyle: {
           fontSize: 16,
           fontWeight: 'bold',
           alignItems: 'center',
           justifyContent: 'center',
-         
         },
         tabStyle: {
-          borderRadius: 15,
+          borderColor: Colors.primary,
+          borderWidth: 1,
           backgroundColor: Colors.background,
-          margin:10,
+          
         }
       }}
       style={{
-        marginTop: 50,
-        
+        marginTop: Platform.OS === 'ios' ? 10 : 20,
+        paddingTop: Platform.OS === 'ios' ? 0 : 20
       }}
       
     >
       <FriendsTab.Screen name="Subscribed Lists" component={SubscribedListsStackScreen} />
       <FriendsTab.Screen name="Shopping List" component={ShoppingList} />
     </FriendsTab.Navigator>
+    </SafeAreaView>
   )
 }
 
@@ -303,9 +328,11 @@ function SettingsStackScreen() {
         initialRouteName="Settings" 
         screenOptions={{
           headerStyle: {
-            backgroundColor: Colors.background,
+            backgroundColor: Colors.primary,
+            elevation: 0, // remove shadow on Android
+            shadowOpacity: 0, // remove shadow on iOS
           },
-          headerTintColor: Colors.primary,
+          headerTintColor: Colors.textLight,
           headerTitleStyle: {
             fontWeight: 'bold',
             fontSize: 26
@@ -323,18 +350,37 @@ export default function App() {
     <NavigationContainer>
       <LoginStack.Navigator
           initialRouteName="Login"
-          headerMode='screen'
           screenOptions={{
-            backgroundColor: Colors.background,
             headerStyle: {
               backgroundColor: Colors.primary,
-              shadowColor: 'transparent'
+              elevation: 0, // remove shadow on Android
+              shadowOpacity: 0, // remove shadow on iOS
+              // height: 120,
+              
             },
-            headerShown: false
-        }} >
-          <LoginStack.Screen options={{ title: '' }} name="Login" component={Login} />
-          <LoginStack.Screen name="SignUp" component={SignUp} />
-          <LoginStack.Screen name="Home" component={MyAppTabScreen} />
+            headerTintColor: Colors.textLight,
+            headerTitleStyle: {
+              fontWeight: 'bold',
+              fontSize: 26,
+              paddingTop: 15,
+              alignItems: 'center'
+            }
+          }} >
+          <LoginStack.Screen 
+            name="Login" 
+            component={Login}
+            options={{
+              headerLeft: () => null
+            }}
+          />
+          <LoginStack.Screen 
+            name="Sign Up" 
+            component={SignUp}
+            options={{
+              headerLeft: () => null
+            }}
+          />
+          <LoginStack.Screen name="Home" component={MyAppTabScreen} options={{ headerShown: false }} />
           <LoginStack.Screen name="ForgotPassword" component={ForgotPassword} />
           <LoginStack.Screen name="PasswordChange" component={PasswordChange} />
       </LoginStack.Navigator>
@@ -351,5 +397,21 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     paddingRight: 10,
+  },
+  customHeaderView: {
+    width: '100%',
+  },
+  customHeaderTextTitle: {
+    color: Colors.textLight,
+    fontWeight: 'bold',
+    fontSize: 26,
+    paddingTop: 25,
+    textAlign: 'center'
+  },
+  customHeaderViewList: {
+    color: Colors.textLight,
+    fontSize: 20,
+    paddingTop: 5,
+    textAlign: 'center'
   }
 });

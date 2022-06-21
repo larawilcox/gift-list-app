@@ -7,6 +7,7 @@ export default {
     textLight: '#FFFFFF', //white
     textError: '#C70039',
     button: '#5C4BAD', //purple
+    disabledButton: '#8c81c5', //faded purple
     newLinkButton: '#EFF1FA', //pale pale purple
     deleteButton: '#f4e5ec',  //pale pink
     textDelete: '#D34C4C', //red  

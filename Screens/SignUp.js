@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
@@ -7,8 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Colors from '../Constants/Colors';
 import { BASE_URL } from '../Constants/Api';
-import { MaterialIcons } from '@expo/vector-icons'; 
-import { Ionicons } from '@expo/vector-icons';
+
 
 
 const SignUp = () => {
@@ -32,7 +31,7 @@ const SignUp = () => {
                 "password": password
             })
             await SecureStore.setItemAsync('token', signup.data.token);
-            await AsyncStorage.setItem('userId', login.data.user._id);
+            await AsyncStorage.setItem('userId', signup.data.user._id);
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'Home' }],
@@ -40,13 +39,23 @@ const SignUp = () => {
 
         } catch (e) {
             console.log(e)
+            if (e.response.data.message) {
+                setErrorMessage('Your password cannot contain the word password')
+            } else {
+                setErrorMessage('An account with this email address already exists')
+            }
+            
         }
     }
 
 
     const checkInput = () => {
-        if (username.length > 0 && password.length > 0 && forename.length > 0 && surname.length > 0)
-        setButtonDisabled(false)
+        if (username.length > 0 && password.length > 6 && forename.length > 0 && surname.length > 0) {
+            setButtonDisabled(false);
+            setErrorMessage('');
+        } else {
+            setButtonDisabled(true);
+        }
     };
 
     const validateEmail = () => {
@@ -54,11 +63,16 @@ const SignUp = () => {
         return re.test(username);
     };
 
+    const validatePassword = () => {
+        if (password.length < 7) {
+            setErrorMessage('Your password must have at least 7 characters');
+        }
+    };
 
     const onSubmitEditing = () => {
         if (buttonDisabled === false) {
             if (validateEmail()) {
-                signup()
+                signup();
             } else {
                 setErrorMessage('Please enter a valid email address');
             }
@@ -66,71 +80,72 @@ const SignUp = () => {
     };
 
     return (
-        <View style={styles.container}>
-            <SafeAreaView style={styles.container}>
-            <Text style={styles.textHeader}>Sign Up</Text>
-            <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => {navigation.navigate('Login')}}>
-                <Text style={styles.forgotPassword}>Login</Text>
-            </TouchableOpacity>
-            {errorMessage.length > 0 ? <Text style={styles.error}>{errorMessage}</Text> : null}
-            <View style={styles.textInputContainer}>
-                <Ionicons name="person" size={24} color={Colors.primary} style={styles.icon} />
-                <TextInput 
-                    style={styles.textInput} 
-                    value={forename}
-                    autoCapitalize="words"
-                    placeholder='Forename'
-                    autoCorrect={false}
-                    placeholderTextColor={Colors.primary}
-                    onChangeText={text => {setForename(text); checkInput()}}
-                    onSubmitEditing={onSubmitEditing} 
-                />
-            </View>
-            <View style={styles.textInputContainer}>
-                <Ionicons name="person" size={24} color={Colors.primary} style={styles.icon} />
-                <TextInput 
-                    style={styles.textInput} 
-                    value={surname}
-                    autoCapitalize="words"
-                    placeholder='Surname'
-                    autoCorrect={false}
-                    placeholderTextColor={Colors.primary}
-                    onChangeText={text => {setSurname(text); checkInput()}}
-                    onSubmitEditing={onSubmitEditing} 
-                />
-            </View>
-            <View style={styles.textInputContainer}>
-                <MaterialIcons name="email" size={28} color={Colors.primary} style={styles.icon} />
-                <TextInput 
-                    style={styles.textInput} 
-                    value={username} 
-                    keyboardType="email-address"
-                    autoCorrect={false}
-                    autoCapitalize="none" 
-                    placeholder='E-mail'
-                    placeholderTextColor={Colors.primary}
-                    onChangeText={text => {setUsername(text); checkInput()}}
-                    onSubmitEditing={onSubmitEditing}
-                />
-            </View>
-            <View style={styles.textInputContainer}>
-                <MaterialIcons name="lock" size={28} color={Colors.primary} style={styles.icon} />
-                <TextInput 
-                    style={styles.textInput} 
-                    value={password}
-                    autoCapitalize="none"
-                    placeholder='Password'
-                    autoCorrect={false}
-                    placeholderTextColor={Colors.primary}
-                    onChangeText={text => {setPassword(text); checkInput()}}
-                    onSubmitEditing={onSubmitEditing} 
-                />
-            </View>
-            <TouchableOpacity onPress={onSubmitEditing} disabled={buttonDisabled} style={styles.button}>
-                <Text style={styles.buttonText}>Sign Up</Text>
-            </TouchableOpacity>
+        <SafeAreaView style={styles.container}>
+            <StatusBar  barStyle="light-content" translucent={true} backgroundColor={Colors.primary} />
+            <KeyboardAvoidingView style={styles.KAVContainer} behavior='padding'>
+                <View style={styles.header}></View>
+                <ScrollView
+                        style={styles.inputContainer}
+                        contentContainerStyle={styles.inputContentContainer}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps='always'>
+                    <View style={styles.input}>
+                        <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => {navigation.reset({
+                            index: 0,
+                            routes: [{ name: "Login" }]
+                        })    }}>
+                            <Text style={styles.forgotPassword}>Login</Text>
+                        </TouchableOpacity>
+                        {errorMessage.length > 0 ? <Text style={styles.error}>{errorMessage}</Text> : null}
+                        <View style={styles.inputDetails}>
+                            <Text style={styles.headerText}>Forename</Text>
+                            <TextInput
+                                style={styles.textInput} 
+                                value={forename}
+                                autoCapitalize="words"
+                                autoCorrect={false}
+                                onChangeText={text => {setForename(text); checkInput()}}
+                                //onSubmitEditing={onSubmitEditing} 
+                            />
+                            <Text style={styles.headerText}>Surname</Text>
+                            <TextInput
+                                style={styles.textInput} 
+                                value={surname}
+                                autoCapitalize="words"
+                                autoCorrect={false}
+                                onChangeText={text => {setSurname(text); checkInput()}}
+                                //onSubmitEditing={onSubmitEditing} 
+                            />
+                            <Text style={styles.headerText}>Email address</Text>
+                            <TextInput
+                                style={styles.textInput} 
+                                value={username} 
+                                keyboardType="email-address"
+                                autoCorrect={false}
+                                autoCapitalize="none" 
+                                onChangeText={text => {setUsername(text); checkInput()}}
+                                //onSubmitEditing={onSubmitEditing}
+                            />
+                            <Text style={styles.headerText}>Password</Text>
+                                <TextInput
+                                    style={styles.textInput} 
+                                    value={password}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    onChangeText={text => {setPassword(text); checkInput()}}
+                                    //onSubmitEditing={onSubmitEditing} 
+                                    secureTextEntry={true}
+                                    blurOnSubmit
+                                    onBlur={validatePassword}
+                                />
+                        </View>
+                    </View>
+                    <TouchableOpacity onPress={onSubmitEditing} disabled={buttonDisabled} style={styles.button}>
+                        <Text style={styles.buttonText}>Sign Up</Text>
+                    </TouchableOpacity>
+                    </ScrollView>
+                </KeyboardAvoidingView>
             </SafeAreaView>
-        </View>
     )
 };
 
@@ -138,77 +153,114 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.background,
+        width: '100%',
+        color: Colors.textLight,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    KAVContainer: {
+        flex: 1,
+        position: 'relative',
         alignItems: 'center',
         width: '100%'
     },
-    logoImage: {
-        height: '15%',
-        aspectRatio: 1,
-        resizeMode: 'contain',
-        overflow: 'visible',
-        marginBottom: 25,
-        marginTop: '10%'
-    },
-    textHeader: {
-        color: Colors.primary,
-        fontSize: 36,
-        textAlign: 'center'
-    },
-    textInputContainer: {
-        flexDirection: 'row',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        height: 60,
-        width: '75%',
-        backgroundColor: Colors.background,
-        borderColor: Colors.primary,
-        borderWidth: 4,
-        borderRadius: 35,
-        marginTop: 20
-    },
-    icon: {
-        marginRight: 20,
-        marginLeft: 20,
-    },
-    textInput: {
-        color: Colors.primary,
-        fontSize: 20,
-        width: '70%'
-        
-    },
-    button: {
-        width: '75%',
-        height: 60,
+    header: {
+        height: 80,
+        width: '100%',
         backgroundColor: Colors.primary,
-        borderColor: Colors.primary,
-        borderWidth: 4,
-        borderRadius: 35,
-        marginTop: 45,
+        color: 'black'
+    },
+    inputContainer: {
+        width: '100%',
+        position: 'absolute',
+        zIndex: 100,
+        marginTop: 25,
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0
+    },
+    inputContentContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        paddingBottom: 220
+    },
+    input: {
+        flex: 1,
+        width: '100%',
         justifyContent: 'center',
         alignItems: 'center'
     },
-    buttonText: {
-        color: Colors.primary,
-        fontSize: 25,
-        fontWeight: 'bold'
-    },
-    error: {
-        textAlign: 'center',
-        color: Colors.primary,
-        marginTop: 15,
-        fontSize: 20
+    forgotPasswordContainer: {
+        width: '75%',
+        alignItems: 'center',
+        paddingBottom: 10
     },
     forgotPassword: {
         fontSize: 16,
-        color: Colors.primary,
+        color: Colors.textLight,
         width: '75%',
-        marginTop: 2,
         textAlign: 'center',
         textDecorationLine: 'underline'
     },
-    forgotPasswordContainer: {
-        width: '75%',
-        alignItems: 'center'
+    error: {
+        textAlign: 'center',
+        color: Colors.textError,
+        marginTop: 35,
+        marginBottom: 15,
+        fontSize: 20,
+        paddingLeft: 20,
+        paddingRight: 20
+    },
+    inputDetails: {
+        width: '90%',
+        backgroundColor: Colors.secondary,
+        paddingBottom: 20,
+        justifyContent: 'center',
+        marginBottom: 20,
+        //shadow and elevation props
+        shadowColor: '#2B2D2F',
+        shadowOffset: {width: 4, height: 4},
+        shadowOpacity: 0.9,
+        shadowRadius: 10,
+        elevation: 20,
+        shadowColor: '#A9A9A9',
+    },
+    headerText: {
+        fontSize: 18,
+        color: Colors.textDark,
+        fontWeight: 'bold',
+        textAlign: 'left',
+        paddingBottom: 5,
+        paddingTop: 20,
+        paddingLeft: 20
+    },
+    textInput: {
+        minHeight: 50,
+        borderRadius: 5,
+        width: '90%',
+        marginLeft: 20,
+        paddingLeft: 10,
+        fontSize: 18,
+        color: Colors.textDark,
+        backgroundColor: Colors.background,
+        textAlign: 'left',
+        justifyContent: 'center'
+    },
+    button: {
+        height: 50,
+        backgroundColor: Colors.primary,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 50,
+        width: 250
+    },
+    buttonText:{
+        color: Colors.textLight,
+        fontSize: 18,
+        fontWeight: 'bold'
     }
 })
 

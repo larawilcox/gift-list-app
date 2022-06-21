@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Linking, Modal, KeyboardAvoidingView } from 'react-native';
-import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { Text, View, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Linking, Modal, KeyboardAvoidingView, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import Colors from '../Constants/Colors';
-import { BASE_URL } from '../Constants/Api';
+import ItemReserve from '../Components/ItemReserve';
+import ItemPurchase from '../Components/ItemPurchase';
+import updateAction from '../Utils/updateAction';
 
-import { AntDesign } from '@expo/vector-icons'; 
-import { MaterialCommunityIcons } from '@expo/vector-icons'; 
+import Colors from '../Constants/Colors';
+
+
 
 const priceValueOptions = [
     { label: '£ Not specified', value: '0' },
@@ -28,147 +28,115 @@ const SubscribedToList = ({ route }) => {
     
     const { ownerId, listName, ownerName } = route.params;
     const [data, setData]  = useState(route.params.data);
+    const [reservedModalVisible, setReservedModalVisible] = useState(false);
+    const [purchasedModalVisible, setPurchasedModalVisible] = useState(false);
+    const [currentItem, setCurrentItem] = useState({
+                                                        _id: '',
+                                                        actions: {  personId: '',
+                                                                    action: ''
+                                                                    },
+                                                                    detail: '',
+                                                                    item: '',
+                                                                    links: [],
+                                                                    price: ''
+                                                    });
     console.log('data: ', data)
  
     const [myId, setMyId] = useState('');
+    
+
 
     const fetchUserId = async () => {
         const userId = await AsyncStorage.getItem('userId');
         setMyId(userId);
-        console.log('userId: ', userId)
+        // console.log('userId: ', userId)
     }
 
     useEffect(() => {
         void fetchUserId();
     }, []);
+
     
     //console.log('myId: ', myId)
     const [toggleDetail, setToggleDetail] = useState();
+
+    const ReserveModal = () => {
+        // console.log('reserve item: ', currentItem)
+        return (
+            <Modal
+                visible={reservedModalVisible}
+                transparent={true}
+            >
+                    <View style={styles.contentContainer}>
+                    <View style={styles.modalInputContainer}>
+                        {(currentItem.actions.personId === myId && currentItem.actions.action === 'reserved' ) ? (
+                            <Text style={styles.text}>Release this item</Text> ) : (
+                                <Text style={styles.text}>Reserve this item</Text>
+                            )
+                        }   
+                        <Text style={styles.text}>{currentItem.item} ?</Text>
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity style={styles.button} onPress={() =>  {updateAction({item: currentItem, action: 'reserved', userId: myId, listId: data.id, setData, setModalVisible: setReservedModalVisible})}}>
+                            {(currentItem.actions.personId === myId && currentItem.actions.action === 'reserved' ) ? (
+                                <Text style={styles.buttonText}>Release</Text> ) : (
+                                    <Text style={styles.buttonText}>Reserve</Text>
+                                )
+                            } 
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => {setReservedModalVisible(false)}} style={styles.button}>
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        )
+    }
+
+    const PurchaseModal = () => {
+        return (
+            <Modal
+                visible={purchasedModalVisible}
+                transparent={true}
+            >
+                    <View style={styles.contentContainer}>
+                    <View style={styles.modalInputContainer}>
+                        {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
+                            <Text style={styles.text}>Release this item</Text> ) : (
+                                <Text style={styles.text}>Purchase this item</Text>
+                            )
+                        }
+                        <Text style={styles.text}>{currentItem.item} ?</Text>
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity style={styles.button} onPress={() => {updateAction({item: currentItem, action: 'purchased', userId: myId, listId: data.id, setData, setModalVisible: setPurchasedModalVisible})}}>
+                            {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
+                                <Text style={styles.buttonText}>Release</Text> ) : (
+                                    <Text style={styles.buttonText}>Purchase</Text>
+                                )
+                             } 
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => {setPurchasedModalVisible(false)}} style={styles.button}>
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        )
+    }
+    
+            
     
 
 
     const Item = ({ data, myId, itemId, toggleDetail, setToggleDetail }) => {
-
-        //console.log('item Id: ', itemId)
-        //console.log('Data: ', data);
-        //console.log('my Id: ', myId)
         
         const currentItem = data.data.find(item => item._id === itemId)
-        
+        console.log('item: ', currentItem)
+       
+
         const itemPrice = priceValueOptions.find(itemPrice => currentItem.price === itemPrice.value);
-        const [reservedModalVisible, setReservedModalVisible] = useState(false);
-        const [purchasedModalVisible, setPurchasedModalVisible] = useState(false);
-        const [action, setAction] = useState('');
-    
-        const updateActionReserved = async (itemId) => {
-    
-            //action on a particular item has to be object of personId and 
-            //action of either reserved or purchased
-            const listId = data.id;
-            //console.log('current item: ', currentItem)
-
-            if (currentItem.actions.personId === '') {
-
-                try {
-                    const token = await SecureStore.getItemAsync('token')
-                    const editedList = await axios.patch(`${BASE_URL}/lists/${listId}/listItem/${itemId}/actions`, {
-                        personId: myId,
-                        action: 'reserved'
-                    }, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    })
-                    //format returned data
-                    const formattedList = {
-                        list: editedList.data.listName,
-                        id: editedList.data._id,
-                        data: editedList.data.listItems
-                    }
-                    setData(formattedList)
-                    setReservedModalVisible(false)
-                } catch (e) {
-                    console.log(e)
-                }
-            } else if (currentItem.actions.personId === myId) {
-                try {
-                    const token = await SecureStore.getItemAsync('token')
-                    const editedList = await axios.patch(`${BASE_URL}/lists/${listId}/listItem/${itemId}/actions`, {
-                        personId: '',
-                        action: ''
-                    }, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    })
-                    //format returned data
-                    const formattedList = {
-                        list: editedList.data.listName,
-                        id: editedList.data._id,
-                        data: editedList.data.listItems
-                    }
-                    setData(formattedList)
-                    setReservedModalVisible(false)
-                } catch (e) {
-                    console.log(e)
-                }
-            }
-        }
-
-        const updateActionPurchased = async (itemId) => {
-    
-            //action on a particular item has to be object of personId and 
-            //action of either reserved or purchased
-            const listId = data.id;
-            //console.log('current item: ', currentItem)
-
-            if (currentItem.actions.personId === '') {
-
-                try {
-                    const token = await SecureStore.getItemAsync('token')
-                    const editedList = await axios.patch(`${BASE_URL}/lists/${listId}/listItem/${itemId}/actions`, {
-                        personId: myId,
-                        action: 'purchased'
-                    }, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    })
-                    //format returned data
-                    const formattedList = {
-                        list: editedList.data.listName,
-                        id: editedList.data._id,
-                        data: editedList.data.listItems
-                    }
-                    setData(formattedList)
-                    setPurchasedModalVisible(false)
-                } catch (e) {
-                    console.log(e)
-                }
-            } else if (currentItem.actions.personId === myId) {
-                try {
-                    const token = await SecureStore.getItemAsync('token')
-                    const editedList = await axios.patch(`${BASE_URL}/lists/${listId}/listItem/${itemId}/actions`, {
-                        personId: '',
-                        action: ''
-                    }, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    })
-                    //format returned data
-                    const formattedList = {
-                        list: editedList.data.listName,
-                        id: editedList.data._id,
-                        data: editedList.data.listItems
-                    }
-                    setData(formattedList)
-                    setPurchasedModalVisible(false)
-                } catch (e) {
-                    console.log(e)
-                }
-            }
-        }
+        
     
     if (currentItem.actions.action !== '' && currentItem.actions.personId !== myId) {
     
@@ -182,128 +150,38 @@ const SubscribedToList = ({ route }) => {
         )
     } else {
         return (
-        <TouchableOpacity onPress={()=> {setToggleDetail(toggleDetail === itemId ? '' : itemId)}}>
-            {itemId === toggleDetail ? (
-                <View style={styles.listItemDetail}>
-                    <View style={styles.titleLine}>
-                        <Text style={styles.listItemText, styles.listItemTextTitle}>{currentItem.item}</Text> 
-                            {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
-                            <View style={styles.spacerReserved}></View> 
-                        ) : (
-                            <TouchableOpacity onPress={() => {setReservedModalVisible(true)}}>
-                                {(currentItem.actions.personId === myId && currentItem.actions.action === 'reserved' ) ? (
-                                //{reservedItemsArray.find(item => item === itemId) ? (
-                                    <AntDesign name="unlock" size={24} color="black" />
-                                ) : (
-                                    <AntDesign name="lock1" size={24} color="black" />
-                                )}
-                            </TouchableOpacity>
-                        ) }
-                            <View style={styles.spacer}></View>
-                            <TouchableOpacity onPress={() => {setPurchasedModalVisible(true)}}>
-                                {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
-                                //{purchasedItemsArray.find(item => item === itemId) ? (
-                                    <MaterialCommunityIcons name="cart-remove" size={24} color="black" />
-                                    ) : (
-                                    <AntDesign name="shoppingcart" size={24} color="black" />
-                                )}
-                            </TouchableOpacity>
-                    </View>
-    
-                    { currentItem.price ?  
-                        <Text style={styles.listItemText}>{itemPrice.label}</Text>
-                        : null
-                    }
-                    { currentItem.detail ?
-                    <Text style={styles.listItemText}>{currentItem.detail}</Text>
-                    : null
-                    }
-                    {currentItem.links ? 
-                    currentItem.links.map(link => 
-                        <Text style={styles.listItemLinkText} key={link.link} onPress={() => Linking.openURL(link.link)}>{link.linkDescription ? link.linkDescription : 'Link'}</Text>
-                        )
-                    : null
-                    }
-                </View>
-            ) :
-                <View style={styles.listItem}>
-                    <Text style={styles.listItemText}>{currentItem.item}</Text>
-                    {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
-                        <View style={styles.spacerReserved}></View> 
-                    ) : (
-                        <TouchableOpacity onPress={() => {setReservedModalVisible(true)}}>
-                            {(currentItem.actions.personId === myId && currentItem.actions.action === 'reserved' ) ? (
-                                <AntDesign name="unlock" size={24} color="black" />
-                            ) : (
-                                <AntDesign name="lock1" size={24} color="black" />
-                            )}
-                        </TouchableOpacity>
-                    ) }
-                    <View style={styles.spacer}></View>
-                    <TouchableOpacity onPress={() => {setPurchasedModalVisible(true)}}>
-                        {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
-                            <MaterialCommunityIcons name="cart-remove" size={24} color="black" />
-                            ) : (
-                            <AntDesign name="shoppingcart" size={24} color="black" />
-                        )}
-                    </TouchableOpacity>
-                </View>
-            }
-    
-    
-    
-            <Modal
-                visible={reservedModalVisible}
-                transparent={true}
-            >
-                    <View style={styles.contentContainer}>
-                        {(currentItem.actions.personId === myId && currentItem.actions.action === 'reserved' ) ? (
-                            <Text style={styles.text}>Release this item</Text> ) : (
-                                <Text style={styles.text}>Reserve this item</Text>
-                            )
-                        }   
-                        <Text style={styles.text}>{currentItem.item} ?</Text>
-                        <View style={styles.buttonContainer}>
-                            <TouchableOpacity style={styles.button} onPress={() =>  updateActionReserved(currentItem._id)}>
-                            {(currentItem.actions.personId === myId && currentItem.actions.action === 'reserved' ) ? (
-                                <Text style={styles.buttonText}>Release</Text> ) : (
-                                    <Text style={styles.buttonText}>Reserve</Text>
-                                )
-                            } 
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => {setReservedModalVisible(false)}} style={styles.button}>
-                                <Text style={styles.buttonText}>Cancel</Text>
-                            </TouchableOpacity>
+        <TouchableOpacity style={styles.listItem} onPress={()=> {setToggleDetail(toggleDetail === itemId ? '' : itemId)}}>
+            
+                {itemId === toggleDetail ? (
+                    <View style={styles.listItemDetail}>
+                        <View style={styles.titleLine}>
+                            <Text style={styles.listItemText, styles.listItemTextTitle}>{currentItem.item}</Text> 
                         </View>
-                    </View>
-            </Modal>
-            <Modal
-                visible={purchasedModalVisible}
-                transparent={true}
-            >
-                    <View style={styles.contentContainer}>
-                        {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
-                        //{purchasedItemsArray.find(item => item === itemId) ? (
-                            <Text style={styles.text}>Release this item</Text> ) : (
-                                <Text style={styles.text}>Purchase this item</Text>
-                            )
+                        { currentItem.price ?  
+                            <Text style={styles.listItemText}>{itemPrice.label}</Text>
+                            : null
                         }
-                        <Text style={styles.text}>{currentItem.item} ?</Text>
-                        <View style={styles.buttonContainer}>
-                            <TouchableOpacity style={styles.button} onPress={() => updateActionPurchased(itemId)}>
-                            {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
-                            //{purchasedItemsArray.find(item => item === itemId) ? (
-                                <Text style={styles.buttonText}>Release</Text> ) : (
-                                    <Text style={styles.buttonText}>Purchase</Text>
-                                )
-                             } 
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => {setPurchasedModalVisible(false)}} style={styles.button}>
-                                <Text style={styles.buttonText}>Cancel</Text>
-                            </TouchableOpacity>
-                        </View>
+                        {currentItem.detail ?
+                        <Text style={styles.listItemText}>{currentItem.detail}</Text>
+                        : null
+                        }
+                        {currentItem.links ? 
+                        currentItem.links.map(link => 
+                            <Text style={styles.listItemLinkText} key={link.link} onPress={() => Linking.openURL(link.link)}>{link.linkDescription ? link.linkDescription : 'Link'}</Text>
+                            )
+                        : null
+                        }
                     </View>
-            </Modal>
+                ) : (
+                    <View style={styles.listItemDetail}>
+                        <Text style={styles.listItemText}>{currentItem.item}</Text>
+                    </View>
+                )}
+                <View style={styles.shoppingIcons}>
+                    <ItemReserve item={currentItem} userId={myId} listId={data.id} setReservedModalVisible={setReservedModalVisible} setCurrentItem={setCurrentItem} />
+                    <ItemPurchase item={currentItem} userId={myId} listId={data.id} setPurchasedModalVisible={setPurchasedModalVisible} setCurrentItem={setCurrentItem} />
+                </View>
+                
         </TouchableOpacity>
       )
     };
@@ -313,28 +191,34 @@ const SubscribedToList = ({ route }) => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <StatusBar  barStyle="light-content" translucent={true} backgroundColor={Colors.primary} />
             <KeyboardAvoidingView style={styles.KAVContainer}>
-                <Text style={styles.listHolderNameTitle}>{ownerName}'s Lists</Text>
-                { (data.data.length > 0) ? (
-                <FlatList 
-                    data={data.data}
-                    renderItem={({ item }) => (
-                        <Item 
-                            myId={myId}
-                            itemId={item._id}
-                            data={data} 
-                            toggleDetail={toggleDetail}
-                            setToggleDetail={setToggleDetail}
-                             />)}
-                    keyExtractor={item => item._id}
-                    style={styles.list}
-                />
-                 ) : (
-                    <View style={styles.noItemsTextContainer}>
-                        <Text style={styles.noItemsText}>There are no items on this list</Text>
-                    </View>
-                )
-                }
+            <View style={styles.header}></View>
+                <View style={styles.listView}>
+                    { (data.data.length > 0) ? (
+                    <FlatList 
+                        data={data.data}
+                        renderItem={({ item }) => (
+                            <Item 
+                                myId={myId}
+                                itemId={item._id}
+                                data={data} 
+                                toggleDetail={toggleDetail}
+                                setToggleDetail={setToggleDetail}
+                                />)}
+                        keyExtractor={item => item._id}
+                        style={styles.list}
+                        contentContainerStyle={{ alignItems: 'center', paddingBottom: 50 }}
+                    />
+                    ) : (
+                        <View style={styles.noItemsTextContainer}>
+                            <Text style={styles.noItemsText}>There are no items on this list</Text>
+                        </View>
+                    )
+                    }
+                </View>
+                <ReserveModal />
+                <PurchaseModal />
             </KeyboardAvoidingView>
         </SafeAreaView>
     )
@@ -343,37 +227,58 @@ const SubscribedToList = ({ route }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        width: '100%',
         backgroundColor: Colors.background,
         color: Colors.textLight,
         justifyContent: 'center',
         alignItems: 'center'
     },
     KAVContainer: {
+        position: 'relative',
         flex: 1,
+        width: '100%',
         alignItems: 'center'
     },
+    header: {
+        height: 80,
+        width: '100%',
+        backgroundColor: Colors.primary,
+        color: 'black'
+    },
+    listView: {
+        backgroundColor: Colors.secondary,
+        marginTop: -40,
+        paddingBottom: 75,
+        width: '95%',
+        alignItems: 'center',
+        //shadow and elevation props
+        shadowColor: '#2B2D2F',
+        shadowOffset: {width: 4, height: 4},
+        shadowOpacity: 0.9,
+        shadowRadius: 10,
+        elevation: 20,
+        shadowColor: '#A9A9A9',
+    },
     listItem: {
+        flexDirection: 'row',
         minHeight: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        borderRadius: 15,
+        width: '95%',
+        borderRadius: 5,
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 10,
+        backgroundColor: Colors.background,
+        paddingRight: 8
+    },
+    titleLineTaken: {
         flexDirection: 'row',
         justifyContent: 'flex-start',
-        alignItems: 'flex-start',
-        marginBottom: 10,
-        width: '100%',
-        paddingBottom: 10,
-        paddingTop: 10,
-    },
-    title: {
-        paddingTop: 60,
-        paddingBottom: 40,
-        fontSize: 26,
-        color: Colors.primary,
-        fontWeight: 'bold'
+        width: '95%'
     },
     list: {
-        paddingTop: 30
+        paddingTop: 30,
+        width: '100%'
     },
     addItemButton:{
         height: 50,
@@ -398,10 +303,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'left',
         width: '80%',
-        paddingLeft: 20
+        //paddingLeft: 20
     },
     noItemsTextContainer: {
-        flex: 1
+        flex: 1,
+        minHeight: 75
     },
     noItemsText: {
         fontSize: 18,
@@ -419,44 +325,37 @@ const styles = StyleSheet.create({
         paddingBottom: 5,
         textAlign: 'left',
         width: '80%',
-        paddingLeft: 20
+        //paddingLeft: 20
     },
     listItemTextTaken: {
         fontSize: 18,
         color: Colors.primary,
         paddingBottom: 5,
         textAlign: 'left',
-        width: '60%',
-        paddingLeft: 20
+        width: '65%',
     },
     listItemTextAction: {
         fontSize: 16,
         color: Colors.primary,
         paddingBottom: 5,
         textAlign: 'right',
-        width: '30%',
-        paddingRight: 20,
+        width: '35%',
+        paddingRight: 10,
         fontWeight: 'bold'
     },
     listItemDetail: {
-        borderWidth: 2,
-        borderColor: Colors.primary,
         borderRadius: 15,
         justifyContent: 'center',
         alignItems: 'flex-start',
-        marginBottom: 10,
-        width: '100%',
+        //marginBottom: 10,
+        width: '75%',
         paddingTop: 15,
-        paddingBottom: 15,
-        //paddingRight: 10
+        paddingBottom: 10,
     },
     titleLine: {
         flexDirection: 'row',
-        justifyContent: 'flex-start'
-    },
-    titleLineTaken: {
-        flexDirection: 'row',
-        justifyContent: 'space-between'
+        justifyContent: 'flex-start',
+        paddingRight: 8
     },
     spacer: {
         width: 10
@@ -474,15 +373,28 @@ const styles = StyleSheet.create({
         textDecorationLine: 'underline'
     },
     contentContainer: {
-        width: '94%',
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        borderRadius: 15,
-        paddingTop: 30,
+        backgroundColor: '#00000080',
+        flex: 1,
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        backgroundColor: Colors.background,
-        marginTop: 120,
-        marginLeft: '3%'
+        width: '100%'
+    },
+    modalInputContainer: {
+        paddingLeft: 5,
+        width: '95%',
+        height: 380,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 5,
+        backgroundColor: Colors.secondary,
+        //shadow and elevation props
+        shadowColor: '#2B2D2F',
+        shadowOffset: {width: 4, height: 4},
+        shadowOpacity: 0.9,
+        shadowRadius: 10,
+        elevation: 20,
+        shadowColor: '#A9A9A9',
+        marginTop: 100
     },
     text: {
         fontSize: 22,
@@ -500,18 +412,17 @@ const styles = StyleSheet.create({
         marginTop: 60
     },
     button:{
-        height: 50,
-        borderWidth: 2,
-        borderColor: Colors.primary,
-        backgroundColor: Colors.primary,
-        borderRadius: 15,
+        height: 60,
+        backgroundColor: Colors.button,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 50,
-        width: 120
+        width: 135,
+        marginTop: 50,
     },
     buttonText:{
-        color: Colors.background,
+        color: Colors.textLight,
         fontSize: 18,
         fontWeight: 'bold'
     },
@@ -522,6 +433,20 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         width: 310
     },
+    shoppingIcons: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignSelf: 'flex-start',
+        paddingTop: 15,
+        width: '20%'
+    },
+    listItemWrapper: {
+        width: '100%'
+    },
+    listItemTitleLine: {
+        width: '85%'
+    }
 })
 
 export default SubscribedToList;
