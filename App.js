@@ -19,8 +19,7 @@ import SubscribedToList from './Screens/SubscribedToList';
 import ShoppingList from './Screens/ShoppingList';
 import ShareList from './Screens/ShareList';
 import Login from './Screens/Login';
-import ForgotPassword from './Screens/ForgotPassword';
-import PasswordChange from './Screens/PasswordChange';
+import ResetPassword from './Screens/ResetPassword';
 import SignUp from './Screens/SignUp';
 
 
@@ -381,8 +380,7 @@ export default function App() {
             }}
           />
           <LoginStack.Screen name="Home" component={MyAppTabScreen} options={{ headerShown: false }} />
-          <LoginStack.Screen name="ForgotPassword" component={ForgotPassword} />
-          <LoginStack.Screen name="PasswordChange" component={PasswordChange} />
+          <LoginStack.Screen name="Reset Password" component={ResetPassword} />
       </LoginStack.Navigator>
     </NavigationContainer>
   )   

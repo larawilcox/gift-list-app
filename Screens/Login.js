@@ -64,16 +64,6 @@ const Login = () => {
         void checkToken();
     }, [])
 
-    // async function signIn() {
-    //     try {
-    //         const user = await Auth.signIn(username, password);
-    //         setErrorMessage('');
-    //         navigation.navigate('DrawerNav', { username: username });
-    //     } catch (error) {
-    //         console.log('error signing in', error);
-    //         setErrorMessage('Incorrect username or password');
-    //     }
-    // };
 
     const onSubmitEditing = () => {
         if (password.length > 6 && username.length > 0) {
@@ -90,9 +80,6 @@ const Login = () => {
         }
     };
 
-    const onForgotPassword = () => {
-        navigation.navigate('ForgotPassword', {email: username});
-    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -105,8 +92,8 @@ const Login = () => {
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps='always'>
                     <View style={styles.input}>
-                        <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => {navigation.navigate('Sign Up')}}>
-                            <Text style={styles.forgotPassword}>Sign Up</Text>
+                        <TouchableOpacity style={styles.signupContainer} onPress={() => {navigation.navigate('Sign Up')}}>
+                            <Text style={styles.signUpText}>Sign Up</Text>
                         </TouchableOpacity>
                         {errorMessage.length > 0 ? <Text style={styles.error}>{errorMessage}</Text> : null}
                             <View style={styles.inputDetails}>
@@ -130,11 +117,12 @@ const Login = () => {
                                     //onSubmitEditing={onSubmitEditing} 
                                     secureTextEntry={true}
                                 />
+                                <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => {navigation.navigate('Reset Password', {email: username})}}>
+                                    <Text style={styles.forgotPassword}>Forgot password?</Text>
+                                </TouchableOpacity>
                             </View>
                     </View>
-                    {/* <TouchableOpacity style={styles.forgotPasswordContainer} onPress={onForgotPassword}>
-                     <Text style={styles.forgotPassword}>Forgotten your password?</Text>
-                    </TouchableOpacity> */}
+                    
                     <TouchableOpacity style={styles.button} onPress={onSubmitEditing}>
                         <Text style={styles.newListText}>Login</Text>
                     </TouchableOpacity>
@@ -187,16 +175,30 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center'
     },
-    forgotPasswordContainer: {
+    signupContainer: {
         width: '75%',
         alignItems: 'center',
         paddingBottom: 10
     },
-    forgotPassword: {
+    signUpText: {
         fontSize: 16,
         color: Colors.textLight,
         width: '75%',
         textAlign: 'center',
+        textDecorationLine: 'underline'
+    },
+    forgotPasswordContainer: {
+        width: '100%',
+        alignItems: 'flex-start',
+        paddingBottom: 10,
+        paddingTop: 5
+    },
+    forgotPassword: {
+        fontSize: 16,
+        color: Colors.textDark,
+        width: '100%',
+        textAlign: 'left',
+        paddingLeft: 20,
         textDecorationLine: 'underline'
     },
     error: {

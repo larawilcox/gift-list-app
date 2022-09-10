@@ -37,6 +37,7 @@ const Settings = () => {
                 }
             });
             console.log(userDetails.data);
+            console.log(token)
             setForename(userDetails.data.forename);
             setSurname(userDetails.data.surname);
             setEmail(userDetails.data.email);
@@ -97,17 +98,16 @@ const Settings = () => {
     };
 
     const deleteAccount = async () => {
-
         try {
             const token = await SecureStore.getItemAsync('token')
-            const deleteUser = await axios.delete(`${BASE_URL}/users/me`, {}, {
+            const deleteUser = await axios.delete(`${BASE_URL}/users/me`, {
                 headers: {
                     Authorization: `Bearer ${token} `
                 }
             })
             await SecureStore.deleteItemAsync('token')
             setModalVisible(false)
-            navigation.navigate('SignUp')
+            navigation.navigate('Sign Up')
         } catch (e) {
             console.log(e)
         }

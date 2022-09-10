@@ -22,7 +22,7 @@ const SignUp = () => {
     const navigation = useNavigation();
 
     const signup = async () => {
-
+        console.log('do we get this far?')
         try {
             const signup = await axios.post(`${BASE_URL}/users`, {
                 "forename": forename,
