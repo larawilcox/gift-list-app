@@ -132,10 +132,10 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.giftlist"
+        applicationId "app.nomoresocks"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        versionCode 2
         versionName "1.0"
     }
     splits {
@@ -153,6 +153,14 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (project.hasProperty('GIFTLIST_UPLOAD_STORE_FILE')) {
+                storeFile file(GIFTLIST_UPLOAD_STORE_FILE)
+                storePassword GIFTLIST_UPLOAD_STORE_PASSWORD
+                keyAlias GIFTLIST_UPLOAD_KEY_ALIAS
+                keyPassword GIFTLIST_UPLOAD_KEY_PASSWORD
+            }
+        }
     }
     buildTypes {
         debug {
@@ -161,7 +169,7 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
