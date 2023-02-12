@@ -136,7 +136,8 @@ const AddItem = ({ route }) => {
                     style={styles.inputContainer}
                     contentContainerStyle={styles.inputContentContainer}
                     showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps='always'>
+                    // keyboardShouldPersistTaps='always'
+                    >
                     <View style={styles.input}>
                         <View style={styles.inputDetails}>
                             <View style={styles.descriptionLineAsterisk}>

@@ -59,7 +59,6 @@ const Login = () => {
                     routes: [{ name: 'Home' }],
                   });
             }
-            // await SecureStore.setItemAsync('token', '');
         }
         void checkToken();
     }, [])
@@ -90,7 +89,8 @@ const Login = () => {
                         style={styles.inputContainer}
                         contentContainerStyle={styles.inputContentContainer}
                         showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps='always'>
+                        // keyboardShouldPersistTaps='always'
+                        >
                     <View style={styles.input}>
                         <TouchableOpacity style={styles.signupContainer} onPress={() => {navigation.navigate('Sign Up')}}>
                             <Text style={styles.signUpText}>Sign Up</Text>

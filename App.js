@@ -257,14 +257,14 @@ function SubscribedListsStackScreen() {
             component={SubscribedToList} 
             options={({ route, navigation }) => ({
               headerTitle: (props) => <CustomHeaderSubscribed {...props} listOwner={route.params.ownerName} listName={route.params.listName} />,
-              headerRight: () => (
-                <TouchableOpacity style={styles.closeButton} onPress={() => navigation.reset({
-                  index: 0,
-                  routes: [{ name: "Subscribed Lists" }]
-                })}>
-                  <AntDesign name="close" size={24} color={Colors.textLight} />
-                </TouchableOpacity>
-              ),
+              // headerRight: () => (
+              //   <TouchableOpacity style={styles.closeButton} onPress={() => navigation.reset({
+              //     index: 0,
+              //     routes: [{ name: "Subscribed Lists" }]
+              //   })}>
+              //     <AntDesign name="close" size={24} color={Colors.textLight} />
+              //   </TouchableOpacity>
+              // ),
               headerLeft: (props) => (
                 <HeaderBackButton
                   {...props}

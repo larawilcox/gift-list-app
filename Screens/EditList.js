@@ -86,7 +86,8 @@ const EditList = ({ route }) => {
                         style={styles.inputContainer}
                         contentContainerStyle={styles.inputContentContainer}
                         showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps='always'>
+                        // keyboardShouldPersistTaps='always'
+                        >
                     <View style={styles.input}>
                         <Text style={styles.headerText}>List Name</Text>
                         <TextInput

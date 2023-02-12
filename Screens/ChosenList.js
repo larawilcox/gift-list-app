@@ -150,7 +150,7 @@ const ChosenList = ({ route }) => {
                 }
             })
             console.log('data:', myCurrentList)
-            const shareResponse = await Share.open({message: `To see ${myName}'s gift list, please enter code ${code} into your app.`});
+            const shareResponse = await Share.open({message: `To see ${myName}'s gift list, please enter code ${code} into your app.\nDownload No More Socks here for:\niOS: https://apps.apple.com/gb/app/no-more-socks/id1597442669\nAndroid: https://play.google.com/store/apps/details?id=app.nomoresocks\nor find it online at https://www.nomoresocks.app`});
         } catch(e) {
             console.log(e)
         }

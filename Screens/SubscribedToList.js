@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Linking, Modal, KeyboardAvoidingView, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+import { useNavigation } from '@react-navigation/native';
 
 import ItemReserve from '../Components/ItemReserve';
 import ItemPurchase from '../Components/ItemPurchase';
 import updateAction from '../Utils/updateAction';
 
+import { AntDesign } from '@expo/vector-icons'; 
 import Colors from '../Constants/Colors';
+import { BASE_URL } from '../Constants/Api';
 
 
 
@@ -26,10 +31,12 @@ const priceValueOptions = [
 
 const SubscribedToList = ({ route }) => {
     
-    const { ownerId, listName, ownerName } = route.params;
+    const { ownerId, listId, listName, ownerName } = route.params;
     const [data, setData]  = useState(route.params.data);
     const [reservedModalVisible, setReservedModalVisible] = useState(false);
     const [purchasedModalVisible, setPurchasedModalVisible] = useState(false);
+    const [deleteListModalVisible, setDeleteListModalVisible] = useState(false);
+    const [unsubscribeError, setUnsubscribeError] = useState('');
     const [currentItem, setCurrentItem] = useState({
                                                         _id: '',
                                                         actions: {  personId: '',
@@ -43,6 +50,18 @@ const SubscribedToList = ({ route }) => {
     console.log('data: ', data)
  
     const [myId, setMyId] = useState('');
+
+    const navigation = useNavigation();
+
+    React.useLayoutEffect(() => {
+        navigation.setOptions({
+          headerRight: () => (
+            <TouchableOpacity style={styles.editListButton} onPress={() => setDeleteListModalVisible(true)}>
+                <AntDesign name="delete" size={24} color={Colors.textLight} />
+            </TouchableOpacity>
+          ),
+        });
+      }, [navigation]);
     
 
 
@@ -55,6 +74,27 @@ const SubscribedToList = ({ route }) => {
     useEffect(() => {
         void fetchUserId();
     }, []);
+
+
+    const unsubscribe = async (ownerId, listId) => {
+
+        try {
+            const token = await SecureStore.getItemAsync('token');
+            console.log(token)
+            const unsubscribeList = await axios.patch(`${BASE_URL}/users/me/subscribedLists/${ownerId}/lists/${listId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            console.log(unsubscribeList)
+            setDeleteListModalVisible(false);
+            //navigate back to Subscribed Lists page and make sure data refreshes
+            navigation.navigate('Subscribed Lists')
+        } catch (e) {
+            console.log(e);
+            setUnsubscribeError('Error! Cannot be deleted.');
+        }
+    }
 
     
     //console.log('myId: ', myId)
@@ -69,12 +109,14 @@ const SubscribedToList = ({ route }) => {
             >
                     <View style={styles.contentContainer}>
                     <View style={styles.modalInputContainer}>
-                        {(currentItem.actions.personId === myId && currentItem.actions.action === 'reserved' ) ? (
-                            <Text style={styles.text}>Release this item</Text> ) : (
-                                <Text style={styles.text}>Reserve this item</Text>
-                            )
-                        }   
-                        <Text style={styles.text}>{currentItem.item} ?</Text>
+                        <View style={styles.textView}>
+                            {(currentItem.actions.personId === myId && currentItem.actions.action === 'reserved' ) ? (
+                                <Text style={styles.text}>Release this item</Text> ) : (
+                                    <Text style={styles.text}>Reserve this item</Text>
+                                )
+                            }   
+                            <Text style={styles.text}>{currentItem.item} ?</Text>
+                        </View>
                         <View style={styles.buttonContainer}>
                             <TouchableOpacity style={styles.button} onPress={() =>  {updateAction({item: currentItem, action: 'reserved', userId: myId, listId: data.id, setData, setModalVisible: setReservedModalVisible})}}>
                             {(currentItem.actions.personId === myId && currentItem.actions.action === 'reserved' ) ? (
@@ -101,12 +143,14 @@ const SubscribedToList = ({ route }) => {
             >
                     <View style={styles.contentContainer}>
                     <View style={styles.modalInputContainer}>
-                        {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
-                            <Text style={styles.text}>Release this item</Text> ) : (
-                                <Text style={styles.text}>Purchase this item</Text>
-                            )
-                        }
-                        <Text style={styles.text}>{currentItem.item} ?</Text>
+                        <View style={styles.textView}>
+                            {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
+                                <Text style={styles.text}>Release this item</Text> ) : (
+                                    <Text style={styles.text}>Purchase this item</Text>
+                                )
+                            }
+                            <Text style={styles.text}>{currentItem.item} ?</Text>
+                        </View>
                         <View style={styles.buttonContainer}>
                             <TouchableOpacity style={styles.button} onPress={() => {updateAction({item: currentItem, action: 'purchased', userId: myId, listId: data.id, setData, setModalVisible: setPurchasedModalVisible})}}>
                             {(currentItem.actions.personId === myId && currentItem.actions.action === 'purchased' ) ? (
@@ -116,6 +160,34 @@ const SubscribedToList = ({ route }) => {
                              } 
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => {setPurchasedModalVisible(false)}} style={styles.button}>
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        )
+    }
+
+    const DeleteListModal = () => {
+        return (
+            <Modal
+                visible={deleteListModalVisible}
+                transparent={true}
+            >
+                    <View style={styles.contentContainer}>
+                    <View style={styles.modalInputContainer}>
+                        <View style={styles.textView}>
+                            <Text style={styles.text}>Unsubscribe from</Text>
+                            <Text style={styles.text}>{ownerName}'s list</Text>
+                            <Text style={styles.text}>{listName}?</Text>
+                            {unsubscribeError ? <Text style={styles.errorText}>{unsubscribeError}</Text> : null}
+                        </View>
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity style={styles.button} onPress={() => {unsubscribe({ ownerId: ownerId, listId: listId })}}>
+                                <Text style={styles.buttonText}>Unsubscribe</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setDeleteListModalVisible(false)} style={styles.button}>
                                 <Text style={styles.buttonText}>Cancel</Text>
                             </TouchableOpacity>
                         </View>
@@ -219,6 +291,7 @@ const SubscribedToList = ({ route }) => {
                 </View>
                 <ReserveModal />
                 <PurchaseModal />
+                <DeleteListModal />
             </KeyboardAvoidingView>
         </SafeAreaView>
     )
@@ -383,7 +456,7 @@ const styles = StyleSheet.create({
         paddingLeft: 5,
         width: '95%',
         height: 380,
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         alignItems: 'center',
         borderRadius: 5,
         backgroundColor: Colors.secondary,
@@ -409,7 +482,7 @@ const styles = StyleSheet.create({
         width: '100%',
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginTop: 60
+        marginTop: 10
     },
     button:{
         height: 60,
@@ -446,6 +519,18 @@ const styles = StyleSheet.create({
     },
     listItemTitleLine: {
         width: '85%'
+    },
+    editListButton: {
+        paddingRight: 15
+    },
+    textView: {
+        marginTop: 30
+    },
+    errorText: {
+        color: Colors.textDelete,
+        fontSize: 18,
+        fontWeight: 'bold',
+        paddingRight: 5
     }
 })
 

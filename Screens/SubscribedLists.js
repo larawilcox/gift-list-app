@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Text, View, StyleSheet, SafeAreaView, KeyboardAvoidingView, ScrollView, SectionList, TouchableOpacity, Modal, TextInput, StatusBar, Platform } from 'react-native';
-import { useNavigation, useFocusEffect, useScrollToTop } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
@@ -43,6 +43,12 @@ const SubscribedLists = () => {
             console.log(e);
         }
     };
+
+    React.useEffect(() => {
+        const refreshList = navigation.addListener('focus', () => {
+          void fetchData();
+        });
+      }, [navigation]);
 
     React.useLayoutEffect(() => {
         navigation.setOptions({

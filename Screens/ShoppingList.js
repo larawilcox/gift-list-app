@@ -76,10 +76,12 @@ const ShoppingList = () => {
         }
     };
 
+    //need to refresh the data when reserve/purchase is updated
     useEffect(() => {
         void fetchData();
-    }, []);
+    }, [currentItem]);
 
+    //refresh the data when switching between Subscribed Lists and Shopping List
     React.useEffect(() => {
         const refreshList = navigation.addListener('focus', () => {
           void fetchData();

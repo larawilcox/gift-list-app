@@ -122,7 +122,8 @@ const Settings = () => {
                         style={styles.inputContainer}
                         contentContainerStyle={styles.inputContentContainer}
                         showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps='always'>
+                        // keyboardShouldPersistTaps='always'
+                        >
                     <View style={styles.input}>
                         <View style={styles.inputDetails}>
                             <Text style={styles.headerText}>First Name:</Text>

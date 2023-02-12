@@ -192,7 +192,8 @@ const EditItem = ({ route }) => {
                 <ScrollView
                     style={styles.inputContainer}
                     contentContainerStyle={styles.inputContentContainer}
-                    keyboardShouldPersistTaps='always'>
+                    // keyboardShouldPersistTaps='always'
+                    >
                     <View style={styles.input}>
                         <View style={styles.inputDetails}>
                             <View style={styles.descriptionLineAsterisk}>
@@ -255,7 +256,7 @@ const EditItem = ({ route }) => {
                                         <ScrollView
                                             style={styles.modalInputContainer}
                                             contentContainerStyle={styles.inputModalContentContainer}
-                                            keyboardShouldPersistTaps='always'
+                                            // keyboardShouldPersistTaps='always'
                                         >
                                             <View style={styles.modalContent}>
                                                 <View style={styles.inputModal}>
